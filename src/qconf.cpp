@@ -1,6 +1,6 @@
 /*
  * qconf.cpp - main qconf source
- * Copyright (C) 2003-2007  Justin Karneges
+ * Copyright (C) 2003-2008  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -26,7 +26,7 @@
 
 #include "stringhelp.h"
 
-#define VERSION "1.4"
+#define VERSION "1.5"
 
 #define CONF_USAGE_SPACE 4
 #define CONF_WRAP        78
@@ -790,6 +790,35 @@ private:
 		"if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
 		"	echo qmake found in $qm\n"
 		"fi\n\n";
+
+		str +=
+		"# try to determine the default makespec\n"
+		"defmakespec=$QMAKESPEC\n"
+		"if [ -z \"$defmakespec\" ]; then\n"
+		"	if $WHICH readlink >/dev/null 2>&1; then\n"
+		"		READLINK=`$WHICH readlink`\n"
+		"	fi\n"
+		"	if [ ! -z \"$READLINK\" ]; then\n"
+		"		qt_mkspecsdir=`$qm -query QT_INSTALL_DATA`/mkspecs\n"
+		"		if [ -a \"$qt_mkspecsdir\" ] && [ -h \"$qt_mkspecsdir/default\" ]; then\n"
+		"			defmakespec=`$READLINK $qt_mkspecsdir/default`\n"
+		"		fi\n"
+		"	fi\n"
+		"fi\n"
+		"\n"
+		"if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
+		"	echo default makespec is $defmakespec\n"
+		"fi\n"
+		"\n"
+		"# if the default is macx-xcode, force macx-g++\n"
+		"if [ \"$defmakespec\" = \"macx-xcode\" ]; then\n"
+		"	QMAKESPEC=macx-g++\n"
+		"	export QMAKESPEC\n"
+		"	if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
+		"		echo overriding makespec to $QMAKESPEC\n"
+		"	fi\n"
+		"fi\n\n";
+
 		return str;
 	}
 
