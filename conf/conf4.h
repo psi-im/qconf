@@ -1,4 +1,10 @@
-// For license information, see the COPYING file in the qconf base directory.
+/*
+Copyright (C) 2004-2008  Justin Karneges
+
+This file is free software; unlimited permission is given to copy and/or
+distribute it, with or without modifications, as long as this notice is
+preserved.
+*/
 
 #ifndef QC_CONF4_H
 #define QC_CONF4_H
