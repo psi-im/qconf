@@ -792,7 +792,7 @@ private:
 		"fi\n\n";
 
 		str +=
-		"# try to determine the default makespec\n"
+		"# try to determine the active makespec\n"
 		"defmakespec=$QMAKESPEC\n"
 		"if [ -z \"$defmakespec\" ]; then\n"
 		"	if $WHICH readlink >/dev/null 2>&1; then\n"
@@ -807,10 +807,10 @@ private:
 		"fi\n"
 		"\n"
 		"if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
-		"	echo default makespec is $defmakespec\n"
+		"	echo makespec is $defmakespec\n"
 		"fi\n"
 		"\n"
-		"# if the default is macx-xcode, force macx-g++\n"
+		"# if the makespec is macx-xcode, force macx-g++\n"
 		"if [ \"$defmakespec\" = \"macx-xcode\" ]; then\n"
 		"	QMAKESPEC=macx-g++\n"
 		"	export QMAKESPEC\n"
