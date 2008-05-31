@@ -800,7 +800,7 @@ private:
 		"	fi\n"
 		"	if [ ! -z \"$READLINK\" ]; then\n"
 		"		qt_mkspecsdir=`$qm -query QT_INSTALL_DATA`/mkspecs\n"
-		"		if [ -a \"$qt_mkspecsdir\" ] && [ -h \"$qt_mkspecsdir/default\" ]; then\n"
+		"		if [ -d \"$qt_mkspecsdir\" ] && [ -h \"$qt_mkspecsdir/default\" ]; then\n"
 		"			defmakespec=`$READLINK $qt_mkspecsdir/default`\n"
 		"		fi\n"
 		"	fi\n"
@@ -810,12 +810,14 @@ private:
 		"	echo makespec is $defmakespec\n"
 		"fi\n"
 		"\n"
+		"qm_spec=\"\"\n"
 		"# if the makespec is macx-xcode, force macx-g++\n"
 		"if [ \"$defmakespec\" = \"macx-xcode\" ]; then\n"
-		"	QMAKESPEC=macx-g++\n"
+		"	qm_spec=macx-g++\n"
+		"	QMAKESPEC=$qm_spec\n"
 		"	export QMAKESPEC\n"
 		"	if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
-		"		echo overriding makespec to $QMAKESPEC\n"
+		"		echo overriding makespec to $qm_spec\n"
 		"	fi\n"
 		"fi\n\n";
 
@@ -839,7 +841,11 @@ private:
 
 		if(qt4) {
 			str +=
-			"	$qm conf4.pro >/dev/null\n"
+			"	if [ ! -z \"$qm_spec\" ]; then\n"
+			"		$qm -spec $qm_spec conf4.pro >/dev/null\n"
+			"	else\n"
+			"		$qm conf4.pro >/dev/null\n"
+			"	fi\n"
 			"	$MAKE clean >/dev/null 2>&1\n"
 			"	$MAKE >../conf.log 2>&1\n";
 		}
@@ -909,6 +915,8 @@ private:
 			str += QString("export QC_PROFILE\n");
 			str += QString("QC_QMAKE=$qm\n");
 			str += QString("export QC_QMAKE\n");
+			str += QString("QC_QMAKESPEC=$qm_spec\n");
+			str += QString("export QC_QMAKESPEC\n");
 			str += QString("QC_MAKETOOL=$MAKE\n");
 			str += QString("export QC_MAKETOOL\n");
 		}
