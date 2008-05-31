@@ -58,6 +58,7 @@ class Conf
 public:
 	bool debug_enabled;
 	QString qmake_path;
+	QString qmakespec;
 	QString maketool;
 
 	QString DEFINES;

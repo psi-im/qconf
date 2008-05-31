@@ -727,6 +727,7 @@ int main()
 	QString confCommand = qc_getenv("QC_COMMAND");
 	QString proName = qc_getenv("QC_PROFILE");
 	conf->qmake_path = qc_getenv("QC_QMAKE");
+	conf->qmakespec = qc_getenv("QC_QMAKESPEC");
 	conf->maketool = qc_getenv("QC_MAKETOOL");
 
 	if(conf->debug_enabled)
@@ -750,6 +751,7 @@ int main()
 		printf("builddir:     [%s]\n", qPrintable(builddir));
 		printf("profile:      [%s]\n", qPrintable(proPath));
 		printf("qmake path:   [%s]\n", qPrintable(conf->qmake_path));
+		printf("qmakespec:    [%s]\n", qPrintable(conf->qmakespec));
 		printf("make tool:    [%s]\n", qPrintable(conf->maketool));
 		printf("\n");
 	}
@@ -813,7 +815,14 @@ int main()
 		return 1;
 
 	// run qmake on the project file
-	int ret = qc_runprogram(qmake_path, QStringList() << proPath, 0, true);
+	QStringList args;
+	if(!conf->qmakespec.isEmpty())
+	{
+		args += "-spec";
+		args += conf->qmakespec;
+	}
+	args += proPath;
+	int ret = qc_runprogram(qmake_path, args, 0, true);
 	if(ret != 0)
 		return 1;
 
