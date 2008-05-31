@@ -809,6 +809,7 @@ int main()
 		success = true;
 	}
 	QString qmake_path = conf->qmake_path;
+	QString qmakespec = conf->qmakespec;
 	delete conf;
 
 	if(!success)
@@ -816,10 +817,10 @@ int main()
 
 	// run qmake on the project file
 	QStringList args;
-	if(!conf->qmakespec.isEmpty())
+	if(!qmakespec.isEmpty())
 	{
 		args += "-spec";
-		args += conf->qmakespec;
+		args += qmakespec;
 	}
 	args += proPath;
 	int ret = qc_runprogram(qmake_path, args, 0, true);
