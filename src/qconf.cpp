@@ -1155,6 +1155,7 @@ public:
 		nobindir = false;
 		useincdir = false;
 		uselibdir = false;
+		usedatadir = false;
 		qt4 = false;
 		byoq = false;
 	}
