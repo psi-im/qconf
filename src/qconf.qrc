@@ -1,0 +1,6 @@
+<!DOCTYPE RCC>
+<RCC version="1.0">
+	<qresource>
+		<file>configexe/configexe_stub.exe</file>
+	</qresource>
+</RCC>
