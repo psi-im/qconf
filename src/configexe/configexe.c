@@ -697,7 +697,7 @@ int main(int argc, char **argv)
 
 		if(arg[0] != '-' || arg[1] != '-')
 		{
-			printf("%s\n", q->usage);
+			printf("%s", q->usage);
 			quit = 1;
 			break;
 		}
@@ -716,7 +716,7 @@ int main(int argc, char **argv)
 
 		if(strcmp(var, "help") == 0)
 		{
-			printf("%s\n", q->usage);
+			printf("%s", q->usage);
 			quit = 1;
 		}
 		else if(strcmp(var, "verbose") == 0)
@@ -735,7 +735,7 @@ int main(int argc, char **argv)
 			}
 			else
 			{
-				printf("%s\n", q->usage);
+				printf("%s", q->usage);
 				quit = 1;
 			}
 		}
