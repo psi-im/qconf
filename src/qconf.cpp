@@ -1624,7 +1624,7 @@ int main(int argc, char **argv)
 			return 1;
 		}
 		QFile mod(fi.filePath());
-		if(!mod.open(QFile::ReadOnly)) {
+		if(!mod.open(QFile::ReadOnly | QFile::Text)) {
 			printf("qconf: error opening '%s'!\n", qPrintable(mod.fileName()));
 			return 1;
 		}
