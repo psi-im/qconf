@@ -31,7 +31,16 @@ QStringList qc_pathlist()
 	QStringList list;
 	QString path = qc_getenv("PATH");
 	if(!path.isEmpty())
+	{
+#ifdef Q_OS_WIN
+		list = path.split(';', QString::SkipEmptyParts);
+#else
 		list = path.split(':', QString::SkipEmptyParts);
+#endif
+	}
+#ifdef Q_OS_WIN
+	list.prepend(".");
+#endif
 	return list;
 }
 
@@ -47,13 +56,30 @@ QString qc_findprogram(const QString &prog)
 			out = fi.filePath();
 			break;
 		}
+
+#ifdef Q_OS_WIN
+		// on windows, be sure to look for .exe
+		if(prog.right(4).toLower() != ".exe")
+		{
+			fi = QFileInfo(list[n] + '/' + prog + ".exe");
+			if(fi.exists() && fi.isExecutable())
+			{
+				out = fi.filePath();
+				break;
+			}
+		}
+#endif
 	}
 	return out;
 }
 
 QString qc_findself(const QString &argv0)
 {
+#ifdef Q_OS_WIN
+	if(argv0.contains('\\'))
+#else
 	if(argv0.contains('/'))
+#endif
 		return argv0;
 	else
 		return qc_findprogram(argv0);

@@ -106,6 +106,65 @@ QString echoBlock(int tabs, const QString &in)
 	return str;
 }
 
+QString formatBlock(const QString &in)
+{
+	QStringList pars = in.split('\n', QString::KeepEmptyParts);
+	if(!pars.isEmpty() && pars.last().isEmpty())
+		pars.removeLast();
+	QStringList lines;
+	int n;
+	for(n = 0; n < pars.count(); ++n) {
+		QStringList list = wrapString(pars[n], CONF_WRAP);
+		for(int n2 = 0; n2 < list.count(); ++n2)
+			lines.append(list[n2]);
+	}
+
+	QString str;
+	for(n = 0; n < lines.count(); ++n)
+		str += lines[n] + '\n';
+	return str;
+}
+
+static void write32(quint8 *out, quint32 i)
+{
+	out[0] = (i >> 24) & 0xff;
+	out[1] = (i >> 16) & 0xff;
+	out[2] = (i >> 8) & 0xff;
+	out[3] = i & 0xff;
+}
+
+static QByteArray lenval(const QByteArray &in)
+{
+	QByteArray out;
+	out.resize(4);
+	write32((quint8 *)out.data(), in.size());
+	out += in;
+	return out;
+}
+
+static QByteArray embed_file(const QString &name, const QByteArray &data)
+{
+	QByteArray out;
+	out += lenval(name.toLatin1());
+	out += lenval(data);
+	return out;
+}
+
+static QByteArray get_configexe_stub()
+{
+	QFile f;
+	f.setFileName(":/configexe/configexe_stub.exe");
+	if(!f.open(QIODevice::ReadOnly))
+	{
+		// for debugging purposes, if .exe stub isn't found, use
+		//   possible unix stub
+		f.setFileName(":/configexe/configexe_stub");
+		if(!f.open(QIODevice::ReadOnly))
+			return QByteArray();
+	}
+	return f.readAll();
+}
+
 const char *qt4_info_str =
 	"Be sure you have a proper Qt 4.0 build environment set up.  This means not just Qt, "
 	"but also a C++ compiler, a make tool, and any other packages necessary "
@@ -123,6 +182,22 @@ const char *qt4_info_str =
 	"\n"
 	"This script will use the first one it finds to be true, checked in the above order.  #3 and #4 are the "
 	"recommended options.  #1 and #2 are mainly for overriding the system configuration.\n"
+	"\n";
+
+const char *qt4_info_str_win =
+	"Be sure you have a proper Qt 4.0 build environment set up.  This means not just Qt, "
+	"but also a C++ compiler, a make tool, and any other packages necessary "
+	"for compiling C++ programs.\n"
+	"\n"
+	"If you are certain everything is installed, then it could be that Qt 4 is not being "
+	"recognized or that a different version of Qt is being detected by mistake (for example, "
+	"this could happen if %QTDIR% is pointing to a Qt 3 installation).  At least one of "
+	"the following conditions must be satisfied:\n"
+	"\n"
+	" 1) --qtdir is set to the location of Qt\n"
+	" 2) %QTDIR% is set to the location of Qt\n"
+	"\n"
+	"This program will use the first one it finds to be true, checked in the above order.\n"
 	"\n";
 
 class ConfUsageOpt
@@ -351,6 +426,42 @@ public:
 		str += genFooter();
 
 		return str.toLatin1();
+	}
+
+	QByteArray generateExe()
+	{
+		QByteArray out = get_configexe_stub();
+		QByteArray sig = "QCONF_CONFIGWIN_BLOCKSIG_68b7e7d7";
+		QByteArray datasec = makeDatasec();
+		out += sig;
+		out += lenval(datasec);
+		return out;
+	}
+
+	QByteArray makeDatasec() const
+	{
+		QByteArray out;
+		QByteArray buf(4, 0);
+
+		out += lenval("<usage>");
+
+		write32((quint8 *)buf.data(), 0);
+		out += buf;
+
+		write32((quint8 *)buf.data(), 5);
+		out += buf;
+		out += embed_file("modules.cpp", filemodulescpp);
+		out += embed_file("modules_new.cpp", filemodulesnewcpp);
+		out += embed_file("conf4.h", fileconfh);
+		out += embed_file("conf4.cpp", fileconfcpp);
+		out += embed_file("conf4.pro", fileconfpro);
+
+		out += lenval("QConf");
+		out += lenval("qconf.pro");
+
+		out += lenval(formatBlock(qt4_info_str_win).toLocal8Bit());
+
+		return out;
 	}
 
 private:
@@ -1362,8 +1473,13 @@ int main(int argc, char **argv)
 		confdirpath = localDataPath + "/conf";
 	}
 	else {
+#ifdef DATADIR
 		moddirs += QString(DATADIR) + "/qconf/modules";
 		confdirpath = QString(DATADIR) + "/qconf/conf";
+#else
+		moddirs += "./modules";
+		confdirpath = "./conf";
+#endif
 	}
 
 	QDir confdir(confdirpath);
@@ -1558,6 +1674,18 @@ int main(int argc, char **argv)
 	chmod("configure", 0755);
 
 	printf("'configure' written.\n");
+
+	// write configexe
+	out.setFileName("configure.exe");
+	if(!out.open(QFile::WriteOnly | QFile::Truncate)) {
+		printf("qconf: error writing configure.exe\n");
+		return 1;
+	}
+	cs = cg.generateExe();
+	out.write(cs);
+	out.close();
+
+	printf("'configure.exe' written.\n");
 
 	return 0;
 }
