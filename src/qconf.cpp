@@ -1,6 +1,6 @@
 /*
  * qconf.cpp - main qconf source
- * Copyright (C) 2003-2008  Justin Karneges
+ * Copyright (C) 2003-2009  Justin Karneges
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
@@ -430,6 +430,16 @@ public:
 
 	QByteArray generateExe()
 	{
+		// main options
+		mainopts.clear();
+		mainopts += ConfOpt("qtdir", "path", "EX_QTDIR", "Directory where Qt is installed.");
+
+		if(libmode)
+			mainopts += ConfOpt("static", QString(), "QC_STATIC", "Create a static library instead of shared.");
+
+		// combine main and extra opts together
+		all = mainopts + appopts + depopts;
+
 		QByteArray out = get_configexe_stub();
 		QByteArray sig = "QCONF_CONFIGWIN_BLOCKSIG_68b7e7d7";
 		QByteArray datasec = makeDatasec();
@@ -443,10 +453,20 @@ public:
 		QByteArray out;
 		QByteArray buf(4, 0);
 
-		out += lenval("<usage>");
+		out += lenval(genUsageOutput().toLatin1());
 
-		write32((quint8 *)buf.data(), 0);
+		write32((quint8 *)buf.data(), all.count());
 		out += buf;
+		for(int n = 0; n < all.count(); ++n)
+		{
+			const ConfOpt &i = all[n];
+			out += lenval(i.name.toLatin1());
+			out += lenval(i.var.toLatin1());
+			if(!i.arg.isEmpty())
+				out += (char)0;
+			else
+				out += (char)1;
+		}
 
 		write32((quint8 *)buf.data(), 5);
 		out += buf;
@@ -456,10 +476,10 @@ public:
 		out += embed_file("conf4.cpp", fileconfcpp);
 		out += embed_file("conf4.pro", fileconfpro);
 
-		out += lenval("QConf");
-		out += lenval("qconf.pro");
+		out += lenval(name.toLatin1());
+		out += lenval(profile.toLatin1());
 
-		out += lenval(formatBlock(qt4_info_str_win).toLocal8Bit());
+		out += lenval(formatBlock(qt4_info_str_win).toLatin1());
 
 		return out;
 	}
@@ -493,7 +513,7 @@ private:
 		return str;
 	}
 
-	int getUsageIndent(const QList<ConfUsageOpt> list)
+	int getUsageIndent(const QList<ConfUsageOpt> list) const
 	{
 		int largest = 0;
 		for(QList<ConfUsageOpt>::ConstIterator it = list.begin(); it != list.end(); ++it) {
@@ -505,7 +525,7 @@ private:
 		return largest;
 	}
 
-	QList<ConfUsageOpt> optsToUsage(const QList<ConfOpt> &list)
+	QList<ConfUsageOpt> optsToUsage(const QList<ConfOpt> &list) const
 	{
 		QList<ConfUsageOpt> out;
 		for(QList<ConfOpt>::ConstIterator it = list.begin(); it != list.end(); ++it) {
@@ -515,7 +535,7 @@ private:
 		return out;
 	}
 
-	QString genUsageSection(const QString &title, const QList<ConfUsageOpt> &list)
+	QString genUsageSection(const QString &title, const QList<ConfUsageOpt> &list) const
 	{
 		QString str;
 		str += title;
@@ -552,6 +572,30 @@ private:
 		}
 
 		str += "EOT\n}\n\n";
+		return str;
+	}
+
+	QString genUsageOutput() const
+	{
+		QString str =
+		"Usage: $0 [OPTION]...\n\n"
+		"This script creates necessary configuration files to build/install.\n\n";
+
+		QList<ConfUsageOpt> list = optsToUsage(mainopts);
+		list += ConfUsageOpt("verbose",  "",   "Show extra configure output.");
+		list += ConfUsageOpt("help",   "",     "This help text.");
+		str += genUsageSection("Main options:", list);
+
+		if(!appopts.isEmpty()) {
+			list = optsToUsage(appopts);
+			str += genUsageSection("Project options:", list);
+		}
+
+		if(!depopts.isEmpty()) {
+			list = optsToUsage(depopts);
+			str += genUsageSection("Dependency options:", list);
+		}
+
 		return str;
 	}
 
