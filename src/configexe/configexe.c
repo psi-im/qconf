@@ -1,3 +1,11 @@
+/*
+Copyright (C) 2009  Justin Karneges
+
+This file is free software; unlimited permission is given to copy and/or
+distribute it, with or without modifications, as long as this notice is
+preserved.
+*/
+
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -505,6 +513,23 @@ static int gen_files(qcdata_t *q, const char *dest)
 	return 1;
 }
 
+static int try_make(const char *makecmd, char **maketool)
+{
+	char *str;
+
+	str = strdup(makecmd);
+	str = append_free(str, " clean");
+	run_silent_all(str);
+	free(str);
+
+	// TODO: pipe stdout/stderr to conf.log?
+	if(run_silent_all(makecmd) != 0)
+		return 0;
+
+	*maketool = strdup(makecmd);
+	return 1;
+}
+
 static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
 {
 	char *str;
@@ -529,19 +554,13 @@ static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
 	}
 	free(str);
 
-	// TODO: try nmake also
-	*maketool = strdup("make");
-	if(run_silent_all("make clean") != 0)
+	if(!try_make("make", maketool))
 	{
-		qc_chdir("..");
-		return 0;
-	}
-
-	// TODO: pipe to conf.log?
-	if(run_silent_all("make") != 0)
-	{
-		qc_chdir("..");
-		return 0;
+		if(!try_make("nmake", maketool))
+		{
+			qc_chdir("..");
+			return 0;
+		}
 	}
 
 	qc_chdir("..");
@@ -554,7 +573,7 @@ static int do_conf_run()
 	int ret;
 
 	str = strdup(qconftemp_path);
-	str = append_free(str, "/out/conf");
+	str = append_free(str, "/conf");
 	npath = separators_to_native(str);
 	free(str);
 	ret = system(npath);
@@ -589,6 +608,7 @@ static int do_conf(qcdata_t *q, const char *argv0)
 		return 0;
 	}
 
+	cleanup_qconftemp();
 	maketool = NULL;
 	if(!do_conf_create(q, qmake_path, &maketool))
 	{

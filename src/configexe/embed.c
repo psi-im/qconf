@@ -1,3 +1,11 @@
+/*
+Copyright (C) 2009  Justin Karneges
+
+This file is free software; unlimited permission is given to copy and/or
+distribute it, with or without modifications, as long as this notice is
+preserved.
+*/
+
 #include "embed.h"
 
 #include <stdio.h>
