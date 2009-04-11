@@ -321,7 +321,11 @@ static char *check_qmake_path(const char *qtdir)
 	char *str;
 
 	str = strdup(qtdir);
+#ifdef QC_OS_WIN
+	str = append_free(str, "/bin/qmake.exe");
+#else
 	str = append_free(str, "/bin/qmake");
+#endif
 	if(file_exists(str))
 	{
 		return str;
@@ -550,7 +554,7 @@ static int do_conf_run()
 	int ret;
 
 	str = strdup(qconftemp_path);
-	str = append_free(str, "/conf");
+	str = append_free(str, "/out/conf");
 	npath = separators_to_native(str);
 	free(str);
 	ret = system(npath);
