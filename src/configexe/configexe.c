@@ -282,7 +282,7 @@ static char *separators_to_native(const char *in)
 	for(n = 0; n < len; ++n)
 	{
 		if(out[n] == '/')
-			out[n] == '\\';
+			out[n] = '\\';
 	}
 #else
 	out = strdup(in);
@@ -358,6 +358,40 @@ static char *find_qmake()
 	return NULL;
 }
 
+static int run_silent_stdout(const char *cmd)
+{
+	char *str;
+	int ret;
+
+	str = strdup(cmd);
+#ifdef QC_OS_WIN
+	str = append_free(str, " >NUL");
+#else
+	str = append_free(str, " >/dev/null");
+#endif
+	ret = system(str);
+	free(str);
+
+	return ret;
+}
+
+static int run_silent_all(const char *cmd)
+{
+	char *str;
+	int ret;
+
+	str = strdup(cmd);
+#ifdef QC_OS_WIN
+	str = append_free(str, " >NUL 2>&1");
+#else
+	str = append_free(str, " >/dev/null 2>&1");
+#endif
+	ret = system(str);
+	free(str);
+
+	return ret;
+}
+
 static int qc_ensuredir(const char *path)
 {
 #ifdef QC_OS_WIN
@@ -400,12 +434,17 @@ static int qc_removedir(const char *path)
 	int ret;
 
 #ifdef QC_OS_WIN
-// TODO
-/*
-deltree /y .qconftemp >NUL 2>&1^
-if NOT errorlevel 1 goto dt1^
-rmdir /s /q .qconftemp >NUL 2>&1^
-*/
+	str = strdup("deltree /y ");
+	str = append_free(str, qconftemp_path);
+	ret = run_silent_all(str);
+	free(str);
+	if(ret != 0)
+	{
+		str = strdup("rmdir /s /q ");
+		str = append_free(str, qconftemp_path);
+		ret = run_silent_all(str);
+		free(str);
+	}
 #else
 	str = strdup("rm -rf ");
 	str = append_free(str, path);
@@ -460,18 +499,6 @@ static int gen_files(qcdata_t *q, const char *dest)
 	if(!gen_file(q, "conf4.pro", dest))
 		return 0;
 	return 1;
-}
-
-static int run_silent_stdout(const char *cmd)
-{
-	// TODO: stdout to NUL
-	return system(cmd);
-}
-
-static int run_silent_all(const char *cmd)
-{
-	// TODO: stdout/stderr to NUL
-	return system(cmd);
 }
 
 static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
