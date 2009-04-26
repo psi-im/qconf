@@ -404,6 +404,23 @@ static int run_silent_all(const char *cmd)
 	return ret;
 }
 
+static int run_conflog_all(const char *cmd)
+{
+	char *str;
+	int ret;
+
+	str = strdup(cmd);
+#ifdef QC_OS_WIN
+	str = append_free(str, " >..\\conf.log 2>&1");
+#else
+	str = append_free(str, " >../conf.log 2>&1");
+#endif
+	ret = system(str);
+	free(str);
+
+	return ret;
+}
+
 static int qc_ensuredir(const char *path)
 {
 #ifdef QC_OS_WIN
@@ -516,14 +533,16 @@ static int gen_files(qcdata_t *q, const char *dest)
 static int try_make(const char *makecmd, char **maketool)
 {
 	char *str;
+	int ret;
 
 	str = strdup(makecmd);
 	str = append_free(str, " clean");
-	run_silent_all(str);
+	ret = run_silent_all(str);
 	free(str);
+	if(ret != 0)
+		return 0;
 
-	// TODO: pipe stdout/stderr to conf.log?
-	if(run_silent_all(makecmd) != 0)
+	if(run_conflog_all(makecmd) != 0)
 		return 0;
 
 	*maketool = strdup(makecmd);
