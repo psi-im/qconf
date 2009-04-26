@@ -89,8 +89,19 @@ int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
 {
 	QString fullcmd = command;
 	if(!showOutput)
+	{
+#ifdef Q_OS_WIN
+		fullcmd += " 2>NUL";
+#else
 		fullcmd += " 2>/dev/null";
+#endif
+	}
+
+#ifdef Q_OS_WIN
+	FILE *f = _popen(fullcmd.toLatin1().data(), "r");
+#else
 	FILE *f = popen(fullcmd.toLatin1().data(), "r");
+#endif
 	if(!f)
 		return -1;
 	if(out)
@@ -392,7 +403,12 @@ int Conf::doCommand(const QString &prog, const QStringList &args, QByteArray *ou
 
 bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, const QString &libs, const QString &proextra, int *retcode)
 {
+#ifdef Q_OS_WIN
+	QDir tmp("qconftemp");
+#else
 	QDir tmp(".qconftemp");
+#endif
+
 	if(!tmp.mkdir("atest"))
 	{
 		debug("unable to create atest dir");
@@ -425,6 +441,7 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 	QString pro = QString(
 		"CONFIG  += console\n"
 		"CONFIG  -= qt app_bundle\n"
+		"DESTDIR  = $$PWD\n"
 		"SOURCES += atest.cpp\n");
 	QString inc = incs.join(" ");
 	if(!inc.isEmpty())
@@ -461,7 +478,13 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 		{
 			ok = true;
 			if(retcode)
-				*retcode = doCommand(QString("./") + out, QStringList());
+			{
+				QString runatest = out;
+#ifdef Q_OS_UNIX
+				runatest.prepend("./");
+#endif
+				*retcode = doCommand(runatest, QStringList());
+			}
 		}
 		r = doCommand(maketool, QStringList() << "distclean");
 		if(r != 0)
