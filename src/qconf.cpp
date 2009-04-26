@@ -1743,7 +1743,9 @@ int main(int argc, char **argv)
 	QByteArray cs = cg.generate();
 	out.write(cs);
 	out.close();
+#ifdef Q_OS_UNIX
 	chmod("configure", 0755);
+#endif
 
 	printf("'configure' written.\n");
 
