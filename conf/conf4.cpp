@@ -116,7 +116,11 @@ int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
 		if(showOutput)
 			fputc(c, stdout);
 	}
+#ifdef Q_OS_WIN
+	int ret = _pclose(f);
+#else
 	int ret = pclose(f);
+#endif
 	if(ret == -1)
 		return -1;
 	return ret;
