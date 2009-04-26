@@ -1300,11 +1300,6 @@ public:
 	}
 };
 
-const char * str2out(const QString &str)
-{
-	return qPrintable(str);
-}
-
 enum VersionMode { VersionMin, VersionExact, VersionMax, VersionAny };
 
 class Dep
@@ -1463,7 +1458,7 @@ int main(int argc, char **argv)
 			fname = conf.name + ".qc";
 			QFile f(fname);
 			if(!f.open(QFile::WriteOnly | QFile::Truncate)) {
-				printf("qconf: unable to write %s\n", str2out(fname));
+				printf("qconf: unable to write %s\n", qPrintable(fname));
 				return 1;
 			}
 			QDomDocument doc;
@@ -1511,19 +1506,19 @@ int main(int argc, char **argv)
 	if(!skipLoad) {
 		QFile f(fname);
 		if(!f.open(QFile::ReadOnly)) {
-			printf("qconf: error reading %s\n", str2out(f.fileName()));
+			printf("qconf: error reading %s\n", qPrintable(f.fileName()));
 			return 1;
 		}
 		QDomDocument doc;
 		if(!doc.setContent(&f)) {
-			printf("qconf: error parsing %s\n", str2out(f.fileName()));
+			printf("qconf: error parsing %s\n", qPrintable(f.fileName()));
 			return 1;
 		}
 		f.close();
 
 		QDomElement base = doc.documentElement();
 		if(base.tagName() != "qconf") {
-			printf("qconf: bad format of %s\n", str2out(f.fileName()));
+			printf("qconf: bad format of %s\n", qPrintable(f.fileName()));
 			return 1;
 		}
 		conf = xmlToConf(base);
@@ -1556,7 +1551,7 @@ int main(int argc, char **argv)
 
 	QDir confdir(confdirpath);
 	if(!confdir.exists()) {
-		printf("qconf: %s does not exist.\n", str2out(confdir.path()));
+		printf("qconf: %s does not exist.\n", qPrintable(confdir.path()));
 		return 1;
 	}
 
@@ -1565,7 +1560,7 @@ int main(int argc, char **argv)
 	if(conf.qt4) {
 		f.setFileName(confdir.filePath("conf4.h"));
 		if(!f.open(QFile::ReadOnly)) {
-			printf("qconf: cannot read %s\n", str2out(f.fileName()));
+			printf("qconf: cannot read %s\n", qPrintable(f.fileName()));
 			return 1;
 		}
 		confh = f.readAll();
@@ -1574,7 +1569,7 @@ int main(int argc, char **argv)
 
 	f.setFileName(confdir.filePath(conf.qt4 ? "conf4.cpp" : "conf.cpp"));
 	if(!f.open(QFile::ReadOnly)) {
-		printf("qconf: cannot read %s\n", str2out(f.fileName()));
+		printf("qconf: cannot read %s\n", qPrintable(f.fileName()));
 		return 1;
 	}
 	QByteArray confcpp = f.readAll();
@@ -1582,15 +1577,15 @@ int main(int argc, char **argv)
 
 	f.setFileName(confdir.filePath(conf.qt4 ? "conf4.pro" : "conf.pro"));
 	if(!f.open(QFile::ReadOnly)) {
-		printf("qconf: cannot read %s\n", str2out(f.fileName()));
+		printf("qconf: cannot read %s\n", qPrintable(f.fileName()));
 		return 1;
 	}
 	QByteArray confpro = f.readAll();
 	f.close();
 	confpro += "\nDEFINES += HAVE_MODULES\n";
 
-	printf("Project name: %s\n", str2out(conf.name));
-	printf("Profile: %s\n", str2out(conf.profile));
+	printf("Project name: %s\n", qPrintable(conf.name));
+	printf("Profile: %s\n", qPrintable(conf.profile));
 	printf("Deps: ");
 	if(conf.deps.isEmpty())
 		printf("none\n");
@@ -1598,7 +1593,7 @@ int main(int argc, char **argv)
 		bool first = true;
 		for(QList<Dep>::ConstIterator it = conf.deps.begin(); it != conf.deps.end(); ++it) {
 			const Dep &dep = *it;
-			printf("%s%s%s", first ? "": " ", str2out(dep.name), dep.required ? "*": "");
+			printf("%s%s%s", first ? "": " ", qPrintable(dep.name), dep.required ? "*": "");
 			first = false;
 		}
 		printf("\n");
