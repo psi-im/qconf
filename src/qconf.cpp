@@ -150,6 +150,34 @@ static QByteArray embed_file(const QString &name, const QByteArray &data)
 	return out;
 }
 
+// eat double-backslashes on windows, as we don't need the extra escaping to
+//   satisfy the unix shell script
+static QByteArray filter_backslashes(const QByteArray &in)
+{
+	QByteArray out;
+
+	bool inbs = false;
+	for(int n = 0; n < in.size(); ++n)
+	{
+		if(in[n] == '\\')
+		{
+			if(inbs)
+			{
+				inbs = false;
+				continue;
+			}
+
+			inbs = true;
+		}
+		else
+			inbs = false;
+
+		out += in[n];
+	}
+
+	return out;
+}
+
 static QByteArray get_configexe_stub()
 {
 	QFile f;
@@ -470,7 +498,7 @@ public:
 
 		write32((quint8 *)buf.data(), 5);
 		out += buf;
-		out += embed_file("modules.cpp", filemodulescpp);
+		out += embed_file("modules.cpp", filter_backslashes(filemodulescpp));
 		out += embed_file("modules_new.cpp", filemodulesnewcpp);
 		out += embed_file("conf4.h", fileconfh);
 		out += embed_file("conf4.cpp", fileconfcpp);
@@ -1719,17 +1747,20 @@ int main(int argc, char **argv)
 
 	printf("'configure' written.\n");
 
-	// write configexe
-	out.setFileName("configure.exe");
-	if(!out.open(QFile::WriteOnly | QFile::Truncate)) {
-		printf("qconf: error writing configure.exe\n");
-		return 1;
-	}
-	cs = cg.generateExe();
-	out.write(cs);
-	out.close();
+	if(conf.qt4)
+	{
+		// write configexe
+		out.setFileName("configure.exe");
+		if(!out.open(QFile::WriteOnly | QFile::Truncate)) {
+			printf("qconf: error writing configure.exe\n");
+			return 1;
+		}
+		cs = cg.generateExe();
+		out.write(cs);
+		out.close();
 
-	printf("'configure.exe' written.\n");
+		printf("'configure.exe' written.\n");
+	}
 
 	return 0;
 }
