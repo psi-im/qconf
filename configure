@@ -480,7 +480,7 @@ QString qc_findprogram(const QString &prog)
 QString qc_findself(const QString &argv0)
 {
 #ifdef Q_OS_WIN
-	if(argv0.contains('\\'))
+	if(argv0.contains('\\\\'))
 #else
 	if(argv0.contains('/'))
 #endif
