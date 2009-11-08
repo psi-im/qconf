@@ -656,13 +656,15 @@ static int do_conf(qcdata_t *q, const char *argv0)
 	if(qc_verbose)
 	{
 		printf("\n");
-		try_print_var("EX_QTDIR", ex_qtdir);
 		for(n = 0; n < q->args_count; ++n)
 			try_print_var(q->args[n].envvar, q->args[n].val);
 	}
 
 	printf("Verifying Qt 4 build environment ... ");
 	fflush(stdout);
+
+	if(qc_verbose)
+		printf("\n");
 
 	qmake_path = find_qmake();
 	if(!qmake_path)
@@ -707,9 +709,6 @@ static int do_conf(qcdata_t *q, const char *argv0)
 		free(qmake_path);
 		return 0;
 	}
-
-	if(ex_qtdir)
-		set_envvar("EX_QTDIR", ex_qtdir);
 
 	set_envvar("QC_COMMAND", argv0);
 	set_envvar("QC_PROFILE", q->pro_file);
@@ -817,15 +816,19 @@ int main(int argc, char **argv)
 			qc_verbose = 1;
 			set_envvar("QC_VERBOSE", "Y");
 		}
-		else if(strcmp(var, "qtdir") == 0)
-		{
-			ex_qtdir = strdup(val);
-		}
 		else
 		{
 			at = find_arg(q->args, q->args_count, var);
 			if(at != -1)
 			{
+				// keep a stash of ex_qtdir
+				if(strcmp(var, "qtdir") == 0)
+				{
+					if(ex_qtdir)
+						free(ex_qtdir);
+					ex_qtdir = strdup(val);
+				}
+
 				if(q->args[at].val)
 					free(q->args[at].val);
 
