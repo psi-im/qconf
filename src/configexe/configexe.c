@@ -20,10 +20,17 @@ preserved.
 #endif
 
 #ifdef QC_OS_WIN
+#include <direct.h>
+#endif
+
+#ifdef QC_OS_WIN
 static char *qconftemp_path = "qconftemp";
 #else
 static char *qconftemp_path = ".qconftemp";
 #endif
+
+static int qc_verbose = 0;
+static char *ex_qtdir = 0;
 
 enum ArgType
 {
@@ -36,6 +43,7 @@ typedef struct qcarg
 	char *name;
 	char *envvar;
 	int type;
+	char *val; // we populate this later based on actual passed args
 } qcarg_t;
 
 typedef struct qcfile
@@ -170,6 +178,8 @@ static qcdata_t *parse_data(unsigned char *data, unsigned int size)
 		p += len;
 
 		q->args[n].type = *(p++);
+
+		q->args[n].val = NULL;
 	}
 
 	q->files_count = read32(p);
@@ -219,6 +229,8 @@ static void qcdata_delete(qcdata_t *q)
 	{
 		free(q->args[n].name);
 		free(q->args[n].envvar);
+		if(q->args[n].val)
+			free(q->args[n].val);
 	}
 
 	for(n = 0; n < q->files_count; ++n)
@@ -350,13 +362,14 @@ static char *find_qmake()
 	char *qtdir;
 	char *path;
 
-	// FIXME: read this internally, not through environment
-	qtdir = get_envvar("EX_QTDIR");
+	qtdir = ex_qtdir;
 	if(qtdir)
 	{
 		path = check_qmake_path(qtdir);
 		if(path)
 			return path;
+		if(qc_verbose)
+			printf("Warning: qmake not found via --qtdir\n");
 	}
 
 	qtdir = get_envvar("QTDIR");
@@ -365,6 +378,8 @@ static char *find_qmake()
 		path = check_qmake_path(qtdir);
 		if(path)
 			return path;
+		if(qc_verbose)
+			printf("Warning: qmake not found via %%QTDIR%%\n");
 	}
 
 	return NULL;
@@ -424,13 +439,12 @@ static int run_conflog_all(const char *cmd)
 static int qc_ensuredir(const char *path)
 {
 #ifdef QC_OS_WIN
-	// TODO: handle existing and error
-	char *str;
-	str = strdup("mkdir ");
-	str = append_free(str, path);
-	system(str);
-	free(str);
-	return 1;
+	if(_mkdir(path) == 0)
+		return 1;
+	else if(errno == EEXIST)
+		return 1;
+	else
+		return 0;
 #else
 	if(mkdir(path, S_IRWXU | S_IRWXG) == 0)
 		return 1;
@@ -549,9 +563,19 @@ static int try_make(const char *makecmd, char **maketool)
 	return 1;
 }
 
+static char *maketool_list[] =
+{
+	"make",
+	"mingw32-make",
+	"nmake",
+	NULL
+};
+
 static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
 {
 	char *str;
+	int n;
+	int at;
 
 	if(!qc_ensuredir(qconftemp_path))
 		return 0;
@@ -562,7 +586,7 @@ static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
 	if(!qc_chdir(qconftemp_path))
 		return 0;
 
-	// TODO: support -spec ?
+	// TODO: support -spec once QC_MAKESPEC matters
 	str = strdup(qmake_path);
 	str = append_free(str, " conf4.pro");
 	if(run_silent_stdout(str) != 0)
@@ -573,16 +597,22 @@ static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
 	}
 	free(str);
 
-	if(!try_make("make", maketool))
+	at = -1;
+	for(n = 0; maketool_list[n]; ++n)
 	{
-		if(!try_make("nmake", maketool))
+		if(qc_verbose)
+			printf("Trying \"%s\"\n", maketool_list[n]);
+		if(try_make(maketool_list[n], maketool))
 		{
-			qc_chdir("..");
-			return 0;
+			at = n;
+			break;
 		}
 	}
 
 	qc_chdir("..");
+	if(at == -1)
+		return 0;
+
 	return 1;
 }
 
@@ -606,46 +636,87 @@ static void cleanup_qconftemp()
 	qc_removedir(qconftemp_path);
 }
 
+static void try_print_var(const char *var, const char *val)
+{
+	printf("%s=", var);
+	if(val)
+		printf("%s", val);
+	printf("\n");
+}
+
 static int do_conf(qcdata_t *q, const char *argv0)
 {
 	char *qmake_path;
 	char *maketool;
+	int n;
 	int ret;
 
 	printf("Configuring %s ...\n", q->pro_name);
+
+	if(qc_verbose)
+	{
+		printf("\n");
+		try_print_var("EX_QTDIR", ex_qtdir);
+		for(n = 0; n < q->args_count; ++n)
+			try_print_var(q->args[n].envvar, q->args[n].val);
+	}
+
 	printf("Verifying Qt 4 build environment ... ");
 	fflush(stdout);
 
 	qmake_path = find_qmake();
 	if(!qmake_path)
 	{
-		printf("fail\n");
+		if(qc_verbose)
+			printf(" -> fail\n");
+		else
+			printf("fail\n");
 		printf("\n");
 		printf("Reason: Unable to find the 'qmake' tool for Qt 4.\n");
 		printf("\n");
 		printf("%s", q->qtinfo);
 		return 0;
 	}
+	if(qc_verbose)
+		printf("qmake found in %s\n", qmake_path);
+
+	// TODO: in verbose mode, print out default makespec and what we're
+	//   overriding the makespec to (if any).  since at this time we don't
+	//   ever override the makespec on windows, we don't need this yet.
 
 	cleanup_qconftemp();
 	maketool = NULL;
 	if(!do_conf_create(q, qmake_path, &maketool))
 	{
 		cleanup_qconftemp();
-		printf("fail\n");
+		if(qc_verbose)
+			printf(" -> fail\n");
+		else
+			printf("fail\n");
 		printf("\n");
 		printf("Reason: There was an error compiling 'conf'.  See conf.log for details.\n");
 		printf("\n");
 		printf("%s", q->qtinfo);
 
+		if(qc_verbose)
+		{
+			printf("conf.log:\n");
+			system("type conf.log");
+		}
+
 		free(qmake_path);
 		return 0;
 	}
 
+	if(ex_qtdir)
+		set_envvar("EX_QTDIR", ex_qtdir);
+
 	set_envvar("QC_COMMAND", argv0);
 	set_envvar("QC_PROFILE", q->pro_file);
 	set_envvar("QC_QMAKE", qmake_path);
-	// TODO: set QC_QMAKESPEC?
+	// TODO: unix configure will set QC_MAKESPEC here if it needs to
+	//   override the mkspec.  currently, it only does this for macx-xcode
+	//   so the behavior doesn't apply to windows yet.
 	set_envvar("QC_MAKETOOL", maketool);
 
 	free(qmake_path);
@@ -661,7 +732,10 @@ static int do_conf(qcdata_t *q, const char *argv0)
 	else if(ret != 0)
 	{
 		cleanup_qconftemp();
-		printf("fail\n");
+		if(qc_verbose)
+			printf(" -> fail\n");
+		else
+			printf("fail\n");
 		printf("\n");
 		printf("Reason: Unexpected error launching 'conf'\n");
 		printf("\n");
@@ -740,17 +814,27 @@ int main(int argc, char **argv)
 		}
 		else if(strcmp(var, "verbose") == 0)
 		{
+			qc_verbose = 1;
 			set_envvar("QC_VERBOSE", "Y");
+		}
+		else if(strcmp(var, "qtdir") == 0)
+		{
+			ex_qtdir = strdup(val);
 		}
 		else
 		{
 			at = find_arg(q->args, q->args_count, var);
 			if(at != -1)
 			{
+				if(q->args[at].val)
+					free(q->args[at].val);
+
 				if(q->args[at].type == ArgValue)
-					set_envvar(q->args[at].envvar, val);
+					q->args[at].val = strdup(val);
 				else // ArgFlag
-					set_envvar(q->args[at].envvar, "Y");
+					q->args[at].val = strdup("Y");
+
+				set_envvar(q->args[at].envvar, q->args[at].val);
 			}
 			else
 			{
@@ -767,11 +851,15 @@ int main(int argc, char **argv)
 	if(quit)
 	{
 		qcdata_delete(q);
+		if(ex_qtdir)
+			free(ex_qtdir);
 		return 1;
 	}
 
 	n = do_conf(q, argv[0]);
 	qcdata_delete(q);
+	if(ex_qtdir)
+		free(ex_qtdir);
 
 	if(n)
 		return 0;
