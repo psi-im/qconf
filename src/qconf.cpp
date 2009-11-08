@@ -499,10 +499,10 @@ public:
 		write32((quint8 *)buf.data(), 5);
 		out += buf;
 		out += embed_file("modules.cpp", filter_backslashes(filemodulescpp));
-		out += embed_file("modules_new.cpp", filemodulesnewcpp);
-		out += embed_file("conf4.h", fileconfh);
-		out += embed_file("conf4.cpp", fileconfcpp);
-		out += embed_file("conf4.pro", fileconfpro);
+		out += embed_file("modules_new.cpp", filter_backslashes(filemodulesnewcpp));
+		out += embed_file("conf4.h", filter_backslashes(fileconfh));
+		out += embed_file("conf4.cpp", filter_backslashes(fileconfcpp));
+		out += embed_file("conf4.pro", filter_backslashes(fileconfpro));
 
 		out += lenval(name.toLatin1());
 		out += lenval(profile.toLatin1());
