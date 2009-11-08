@@ -368,9 +368,9 @@ static char *find_qmake()
 		path = check_qmake_path(qtdir);
 		if(path)
 			return path;
-		if(qc_verbose)
-			printf("Warning: qmake not found via --qtdir\n");
 	}
+	if(qc_verbose)
+		printf("Warning: qmake not found via --qtdir\n");
 
 	qtdir = get_envvar("QTDIR");
 	if(qtdir)
@@ -378,9 +378,9 @@ static char *find_qmake()
 		path = check_qmake_path(qtdir);
 		if(path)
 			return path;
-		if(qc_verbose)
-			printf("Warning: qmake not found via %%QTDIR%%\n");
 	}
+	if(qc_verbose)
+		printf("Warning: qmake not found via %%QTDIR%%\n");
 
 	return NULL;
 }
