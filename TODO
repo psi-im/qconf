@@ -1,5 +1,5 @@
 Store last-used configure arguments in a config.status file.
-Don't generate conf.log, put that information in --debug.
+Don't generate conf.log, put that information in --verbose.
 
 QConf can be considered complete.  There are some todo items in this file,
 but they are not vital.  I've added some rationale text for each one to
