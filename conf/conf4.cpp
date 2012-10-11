@@ -85,64 +85,53 @@ QString qc_findself(const QString &argv0)
 		return qc_findprogram(argv0);
 }
 
-int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
+int qc_run_program_or_command(const QString &prog, const QStringList &args, const QString &command, QByteArray *out, bool showOutput)
 {
-	QString fullcmd = command;
-	if(!showOutput)
+	QProcess process;
+
+	if(!prog.isEmpty())
+		process.start(prog, args);
+	else if(!command.isEmpty())
+		process.start(command);
+	else
+		return -1;
+
+	if(!process.waitForStarted(-1))
+		return -1;
+
+	while(!process.atEnd())
 	{
-#ifdef Q_OS_WIN
-		fullcmd += " 2>NUL";
-#else
-		fullcmd += " 2>/dev/null";
-#endif
+		if(!process.waitForReadyRead(-1))
+			return -1;
+
+		QByteArray buf = process.readAllStandardOutput();
+		if(out)
+			out->append(buf);
+		if(showOutput)
+			fprintf(stdout, "%s", buf.data());
+
+		buf = process.readAllStandardError();
+		if(showOutput)
+			fprintf(stderr, "%s", buf.data());
 	}
 
-#ifdef Q_OS_WIN
-	FILE *f = _popen(fullcmd.toLatin1().data(), "r");
-#else
-	FILE *f = popen(fullcmd.toLatin1().data(), "r");
-#endif
-	if(!f)
+	if(!process.waitForFinished(-1))
 		return -1;
-	if(out)
-		out->clear();
-	while(1)
-	{
-		char c = (char)fgetc(f);
-		if(feof(f))
-			break;
-		if(out)
-			out->append(c);
-		if(showOutput)
-			fputc(c, stdout);
-	}
-#ifdef Q_OS_WIN
-	int ret = _pclose(f);
-#else
-	int ret = pclose(f);
-#endif
-	if(ret == -1)
+
+	if(process.exitStatus() != QProcess::NormalExit)
 		return -1;
-	return ret;
+
+	return process.exitCode();
+}
+
+int qc_runcommand(const QString &command, QByteArray *out, bool showOutput)
+{
+	return qc_run_program_or_command(QString(), QStringList(), command, out, showOutput);
 }
 
 int qc_runprogram(const QString &prog, const QStringList &args, QByteArray *out, bool showOutput)
 {
-	QString fullcmd = prog;
-	QString argstr = args.join(" ");
-	if(!argstr.isEmpty())
-		fullcmd += QString(" ") + argstr;
-	return qc_runcommand(fullcmd, out, showOutput);
-
-	// TODO: use QProcess once it is fixed
-	/*
-	QProcess process;
-	if(showOutput)
-		process.setReadChannelMode(ForwardedChannels);
-	process.start(prog, args);
-	process.waitForFinished(-1);
-	return process.exitCode();
-	*/
+	return qc_run_program_or_command(prog, args, QString(), out, showOutput);
 }
 
 bool qc_removedir(const QString &dirPath)
@@ -765,8 +754,8 @@ void Conf::addExtra(const QString &str)
 int main()
 {
 	Conf *conf = new Conf;
-	ConfObj *o;
-	o = 0;
+	ConfObj *o = 0;
+	Q_UNUSED(o);
 #ifdef HAVE_MODULES
 # include"modules_new.cpp"
 #endif
