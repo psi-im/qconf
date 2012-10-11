@@ -1,5 +1,6 @@
 Store last-used configure arguments in a config.status file.
 Don't generate conf.log, put that information in --verbose.
+make it possible to use relative paths as input?
 
 QConf can be considered complete.  There are some todo items in this file,
 but they are not vital.  I've added some rationale text for each one to
@@ -13,23 +14,12 @@ explain why.
   usage, this can be revisited, but even still it may not need to be
   explicitly supported.
 
-- windows version? (configure.exe / configure.bat)
-
-  Windows is different enough from Unix that you can't do an automatic
-  dependency lookup.  Additionally, using 'configure' on Windows is
-  unconventional.  For now, my recommendation for Windows is to just stick
-  to .pro files only, and have an editable .pri file if options are needed.
-
-  Qt itself uses a 'configure.exe' that closely matches their Unix
-  counterpart.  This is pretty cool, but again I'm not sure if it is worth
-  bothering about.
-
 - turn .qc file into qmake-style format instead of xml?
 
   XML is human-readable and nice for application data interchange, but it
   isn't very nice to have to write by yourself.  I'm using it only because
-  I didn't want to write a parser.  I used to hate applications that
-  required manual XML editing (I'm looking at you jabberd), and here I am
+  I didn't want to write a parser.  I generally hate it when applications
+  require manual XML editing (I'm looking at you jabberd), and here I am
   committing the same offense.
 
   Fortunately, the XML files are usually only a handful of lines, and they
