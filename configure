@@ -491,7 +491,11 @@ QString qc_findself(const QString &argv0)
 
 int qc_run_program_or_command(const QString &prog, const QStringList &args, const QString &command, QByteArray *out, bool showOutput)
 {
+	if(out)
+		out->clear();
+
 	QProcess process;
+	process.setReadChannel(QProcess::StandardOutput);
 
 	if(!prog.isEmpty())
 		process.start(prog, args);
@@ -503,12 +507,11 @@ int qc_run_program_or_command(const QString &prog, const QStringList &args, cons
 	if(!process.waitForStarted(-1))
 		return -1;
 
-	while(!process.atEnd())
-	{
-		if(!process.waitForReadyRead(-1))
-			return -1;
+	QByteArray buf;
 
-		QByteArray buf = process.readAllStandardOutput();
+	while(process.waitForReadyRead(-1))
+	{
+		buf = process.readAllStandardOutput();
 		if(out)
 			out->append(buf);
 		if(showOutput)
@@ -519,8 +522,16 @@ int qc_run_program_or_command(const QString &prog, const QStringList &args, cons
 			fprintf(stderr, "%s", buf.data());
 	}
 
-	if(!process.waitForFinished(-1))
-		return -1;
+	buf = process.readAllStandardError();
+	if(showOutput)
+		fprintf(stderr, "%s", buf.data());
+
+	// calling waitForReadyRead will cause the process to eventually be
+	//   marked as finished, so we should not need to separately call
+	//   waitForFinished. however, we will do it anyway just to be safe.
+	//   we won't check the return value since false could still mean
+	//   success (if the process had already been marked as finished).
+	process.waitForFinished(-1);
 
 	if(process.exitStatus() != QProcess::NormalExit)
 		return -1;
