@@ -161,10 +161,11 @@ printf "Verifying Qt 4 build environment ... "
 # run qmake -v and check version
 qmake_check_v4() {
 	if [ -x "$1" ]; then
-		if echo `$1 -v 2>&1` | grep "Qt version 4\." >/dev/null 2>&1; then
-			return 0
-		elif [ "$QC_VERBOSE" = "Y" ]; then
-			echo "Warning: $1 not for Qt 4"
+       local v=`$1 -query QT_VERSION 2>&1`
+       vmaj="${v%%.*}"
+       case "${v}" in ?.?.?) [ "$vmaj" = 4 -o "$vmaj" = 5 ] && return 0 ;; esac
+		if [ "$QC_VERBOSE" = "Y" ]; then
+			echo "Warning: $1 not for Qt 4 or 5"
 		fi
 	fi
 	return 1
