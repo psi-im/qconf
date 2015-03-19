@@ -176,7 +176,7 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 fi
 
 qm=""
-names="qmake-qt4 qmake4 qmake"
+names="qmake-qt5 qmake5 qmake-qt4 qmake4 qmake"
 
 # qt4 check: --qtdir
 if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
