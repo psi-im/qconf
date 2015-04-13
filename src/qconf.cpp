@@ -1011,16 +1011,16 @@ private:
 	QString genDoQConf()
 	{
 		QString outdir = ".qconftemp";
-		QString cleanup = QString("rm -rf %1").arg(outdir);
+		QString cleanup = QString("rm -rf \"%1\"").arg(outdir);
 
 		QString str;
 		str += QString("%1\n").arg(cleanup);
 
 		str += QString(
 		"(\n"
-		"	mkdir %1\n"
-		"	gen_files %2\n"
-		"	cd %3\n"
+		"	mkdir \"%1\"\n"
+		"	gen_files \"%2\"\n"
+		"	cd \"%3\"\n"
 		).arg(outdir).arg(outdir).arg(outdir);
 
 		if(qt4) {
@@ -1105,7 +1105,7 @@ private:
 			str += QString("export QC_MAKETOOL\n");
 		}
 
-		str += QString("%1/conf\n").arg(outdir);
+		str += QString("\"%1/conf\"\n").arg(outdir);
 
 		str += "ret=\"$?\"\n";
 		str += "if [ \"$ret\" = \"1\" ]; then\n";
@@ -1181,7 +1181,7 @@ private:
 	QString genEmbeddedFile(const QString &name, const QByteArray &a)
 	{
 		QString str;
-		str += QString("cat >%1 <<EOT\n").arg(name);
+		str += QString("cat >\"%1\" <<EOT\n").arg(name);
 		str += escapeFile(QString::fromLatin1(a));
 		str += "\nEOT\n";
 		return str;

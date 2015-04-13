@@ -415,7 +415,7 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 
 	if(!tmp.mkdir("atest"))
 	{
-		debug("unable to create atest dir");
+		debug(QString("unable to create atest dir: %1").arg(tmp.absoluteFilePath("atest")));
 		return false;
 	}
 	QDir dir(tmp.filePath("atest"));
@@ -762,8 +762,9 @@ void Conf::addExtra(const QString &str)
 # include"modules.cpp"
 #endif
 
-int main()
+int main(int argc, char ** argv)
 {
+	QCoreApplication app(argc, argv);
 	Conf *conf = new Conf;
 	ConfObj *o = 0;
 	Q_UNUSED(o);
