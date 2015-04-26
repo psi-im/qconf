@@ -755,7 +755,7 @@ private:
 		"			shift\n"
 		"			;;\n"
 		"		--help) show_usage; exit ;;\n"
-		"		*) show_usage; exit ;;\n"
+		"		*) show_usage; exit 1;;\n"
 		"	esac\n"
 		"done\n\n";
 
