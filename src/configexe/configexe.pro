@@ -4,6 +4,8 @@ TARGET = configexe_stub
 
 CONFIG += release
 
+*win32-g++*:QMAKE_LFLAGS += -static-libgcc
+
 HEADERS += \
 	embed.h
 

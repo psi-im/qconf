@@ -12,7 +12,7 @@ preserved.
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <errno.h>
-#include <unistd.h>
+//#include <unistd.h>
 #include "embed.h"
 
 #if defined(WIN32) || defined(_WIN32)
@@ -361,6 +361,8 @@ static char *find_qmake()
 {
 	char *qtdir;
 	char *path;
+    FILE *qmp;
+    char try_syspath = 1;
 
 	qtdir = ex_qtdir;
 	if(qtdir)
@@ -368,8 +370,9 @@ static char *find_qmake()
 		path = check_qmake_path(qtdir);
 		if(path)
 			return path;
+        try_syspath = 0;
 	}
-	if(qc_verbose)
+    if(qc_verbose)
 		printf("Warning: qmake not found via --qtdir\n");
 
 	qtdir = get_envvar("QTDIR");
@@ -378,9 +381,49 @@ static char *find_qmake()
 		path = check_qmake_path(qtdir);
 		if(path)
 			return path;
+        try_syspath = 0;
 	}
 	if(qc_verbose)
 		printf("Warning: qmake not found via %%QTDIR%%\n");
+
+    /* if not set explicitly try something implicit */
+    if (try_syspath) {
+        char *dname = 0;
+        int len;
+        qmp = popen("qmake -query QT_INSTALL_BINS", "r");
+        if (qmp) {
+            char buf[PATH_MAX];
+            int cnt;
+            while ((cnt = fread(buf, 1, PATH_MAX - 1, qmp))) {
+                buf[cnt] = 0;
+                if (!dname) {
+                    dname = strdup(buf);
+                } else {
+                    dname = append_free(dname, buf);
+                }
+            }
+            pclose(qmp);
+        }
+        if (dname) {
+            len = strlen(dname);
+            while (len && dname[len - 1] < ' ')
+                dname[--len] = '\0';
+            if (len && file_exists(dname)) {
+#ifdef QC_OS_WIN
+                dname = append_free(dname, "/qmake.exe"); /* it coud be *.cmd but we don't care */
+#else
+                dname = append_free(dname, "/qmake");
+#endif
+                char *ndname = separators_to_native(dname);
+                free(dname);
+                return ndname;
+            }
+            free(dname);
+        }
+    }
+
+    if(qc_verbose)
+        printf("Warning: qmake not found in PATH\n");
 
 	return NULL;
 }
@@ -660,7 +703,7 @@ static int do_conf(qcdata_t *q, const char *argv0)
 			try_print_var(q->args[n].envvar, q->args[n].val);
 	}
 
-	printf("Verifying Qt 4 build environment ... ");
+    printf("Verifying Qt 4+ build environment ... ");
 	fflush(stdout);
 
 	if(qc_verbose)
