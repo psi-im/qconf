@@ -62,8 +62,8 @@ public:
 	QString maketool;
 
 	QString DEFINES;
-	QString INCLUDEPATH;
-	QString LIBS;
+	QStringList INCLUDEPATH;
+	QStringList LIBS;
 	QString extra;
 
 	QList<ConfObj*> list;
@@ -74,6 +74,12 @@ public:
 
 	QString getenv(const QString &var);
 	QString qvar(const QString &s);
+	QString normalizePath(const QString &s) const;
+	QString escapeQmakeVar(const QString &s) const;
+	inline QString escapePath(const QString &s) /* prepare fs path for qmake file */
+	{ return escapeQmakeVar(normalizePath(s)); }
+	QString escapedIncludes() const;
+	QString escapedLibs() const;
 
 	bool exec();
 

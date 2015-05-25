@@ -150,34 +150,6 @@ static QByteArray embed_file(const QString &name, const QByteArray &data)
 	return out;
 }
 
-// eat double-backslashes on windows, as we don't need the extra escaping to
-//   satisfy the unix shell script
-static QByteArray filter_backslashes(const QByteArray &in)
-{
-	QByteArray out;
-
-	bool inbs = false;
-	for(int n = 0; n < in.size(); ++n)
-	{
-		if(in[n] == '\\')
-		{
-			if(inbs)
-			{
-				inbs = false;
-				continue;
-			}
-
-			inbs = true;
-		}
-		else
-			inbs = false;
-
-		out += in[n];
-	}
-
-	return out;
-}
-
 static QByteArray get_configexe_stub()
 {
 	QFile f;
@@ -406,7 +378,7 @@ public:
 
 		if(qt4) {
 			if(byoq) {
-				str += "printf \"Preparing internal Qt 4 build environment ... \"\n\n";
+				str += "printf \"Preparing internal Qt 4+ build environment ... \"\n\n";
 
 				str += "cd byoq\n";
 				str += "./byoq build\n";
@@ -498,11 +470,11 @@ public:
 
 		write32((quint8 *)buf.data(), 5);
 		out += buf;
-		out += embed_file("modules.cpp", filter_backslashes(filemodulescpp));
-		out += embed_file("modules_new.cpp", filter_backslashes(filemodulesnewcpp));
-		out += embed_file("conf4.h", filter_backslashes(fileconfh));
-		out += embed_file("conf4.cpp", filter_backslashes(fileconfcpp));
-		out += embed_file("conf4.pro", filter_backslashes(fileconfpro));
+		out += embed_file("modules.cpp", filemodulescpp);
+		out += embed_file("modules_new.cpp", filemodulesnewcpp);
+		out += embed_file("conf4.h", fileconfh);
+		out += embed_file("conf4.cpp", fileconfcpp);
+		out += embed_file("conf4.pro", fileconfpro);
 
 		out += lenval(name.toLatin1());
 		out += lenval(profile.toLatin1());
@@ -1660,19 +1632,7 @@ int main(int argc, char **argv)
 		dep.section = info.section;
 		dep.args = info.args;
 
-		// prepend #line
-		int oldsize = buf.size();
-		QString str = QString("#line 1 \"%1\"\n").arg(modfname);
-		QByteArray cs = str.toLocal8Bit();
-		int len = cs.length();
-		buf.resize(oldsize + len);
-		memmove(buf.data() + len, buf.data(), oldsize);
-		memcpy(buf.data(), cs.data(), len);
-
-		// append to the module buffer
-		oldsize = allmods.size();
-		allmods.resize(oldsize + buf.size());
-		memcpy(allmods.data() + oldsize, buf.data(), buf.size());
+		allmods += (QString("#line 1 \"%1\"\n").arg(modfname).toLocal8Bit() + buf);
 
 		modscreate += QString("    o = new qc_%1(conf);\n    o->required = %2;\n    o->disabled = %3;\n"
 			).arg(escapeArg(dep.name)).arg(dep.required ? "true": "false").arg(dep.disabled ? "true": "false");

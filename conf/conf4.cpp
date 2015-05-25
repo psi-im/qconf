@@ -76,7 +76,7 @@ QString qc_findprogram(const QString &prog)
 QString qc_findself(const QString &argv0)
 {
 #ifdef Q_OS_WIN
-	if(argv0.contains('\\\\'))
+		if(argv0.contains('\\'))
 #else
 	if(argv0.contains('/'))
 #endif
@@ -175,12 +175,77 @@ bool qc_removedir(const QString &dirPath)
 	return true;
 }
 
+// simple command line arguemnts splitter able to understand quoted args.
+// the splitter removes quotes and unescapes symbols as well.
+QStringList qc_splitflags(const QString &flags)
+{
+	QStringList ret;
+	bool searchStart = true;
+	bool inQuotes = false;
+	bool escaped = false;
+	QChar quote, backslash = QLatin1Char('\\');
+	QString buf;
+	buf.reserve(PATH_MAX);
+	for (int i=0; i < flags.length(); i++) {
+		if (searchStart && flags[i].isSpace()) {
+			continue;
+		}
+		if (searchStart) {
+			searchStart = false;
+			buf.clear();
+		}
+		if (escaped) {
+			buf += flags[i];
+			escaped = false;
+			continue;
+		}
+		//buf += flags[i];
+		if (inQuotes) {
+			if (quote == QLatin1Char('\'')) {
+				if (flags[i] == quote) {
+					inQuotes = false;
+					continue;
+				}
+			} else { // we are in double quoetes
+				if (flags[i] == backslash && i < flags.length() - 1 &&
+						(flags[i+1] == QLatin1Char('"') || flags[i+1] == backslash))
+				{
+					// if next symbol is one of in parentheses ("\)
+					escaped = true;
+					continue;
+				}
+			}
+		} else {
+			if (flags[i].isSpace()) {
+				ret.append(buf);
+				searchStart = true;
+				buf.clear();
+				continue;
+#ifndef Q_OS_WIN /* on windows backslash is just a path separator */
+			} else if (flags[i] == backslash) {
+				escaped = true;
+				continue; // just add next symbol
+#endif
+			} else if (flags[i] == QLatin1Char('\'') || flags[i] == QLatin1Char('"')) {
+				inQuotes = true;
+				quote = flags[i];
+				continue;
+			}
+		}
+		buf += flags[i];
+	}
+	if (buf.size()) {
+		ret.append(buf);
+	}
+	return ret;
+}
+
 void qc_splitcflags(const QString &cflags, QStringList *incs, QStringList *otherflags)
 {
 	incs->clear();
 	otherflags->clear();
 
-	QStringList cflagsList = cflags.split(" ");
+	QStringList cflagsList = qc_splitflags(cflags);
 	for(int n = 0; n < cflagsList.count(); ++n)
 	{
 		QString str = cflagsList[n];
@@ -207,6 +272,86 @@ QString qc_escapeArg(const QString &str)
 			out += str[n];
 	}
 	return out;
+}
+
+
+QString qc_trim_char(const QString &s, const QChar &ch)
+{
+	if (s.startsWith(ch) && s.endsWith(ch)) {
+		return s.mid(1, s.size() - 2);
+	}
+	return s;
+}
+
+// removes surrounding quotes, removes trailing slashes, converts to native separators.
+// accepts unescaped but possible quoted path
+QString qc_normalize_path(const QString &str)
+{
+	QString path = str.trimmed();
+	path = qc_trim_char(path, QLatin1Char('"'));
+	path = qc_trim_char(path, QLatin1Char('\''));
+#ifdef Q_OS_WIN
+	QLatin1Char nativeSep('\\');
+	path.replace(QLatin1Char('/'), QLatin1Char('\\'));
+#else
+	QLatin1Char nativeSep('/');
+#endif
+	// trim trailing slashes
+	while (path.length() && path[path.length() - 1] == nativeSep) {
+		path.resize(path.length() - 1);
+	}
+	return path;
+}
+
+// escape filesystem path to be added to qmake pro/pri file.
+QString qc_escape_string_var(const QString &str)
+{
+	QString path = str;
+	path.replace(QLatin1Char('\\'), QLatin1String("\\\\"))
+			.replace(QLatin1Char('"'), QLatin1String("\\\""));
+	if (path.indexOf(QLatin1Char(' ')) != -1) { // has spaces
+		return QLatin1Char('"') + path + QLatin1Char('"');
+	}
+	return path;
+}
+
+// escapes each path in incs and join into single string suiable for INCLUDEPATH var
+QString qc_prepare_includepath(const QStringList &incs)
+{
+	if (incs.empty()) {
+		return QString();
+	}
+	QStringList ret;
+	foreach (const QString &path, incs) {
+		ret.append(qc_escape_string_var(path));
+	}
+	return ret.join(QLatin1Char(' '));
+}
+
+// escapes each path in libs and to make it suiable for LIBS var
+// notice, entries of libs are every single arg for linker.
+QString qc_prepare_libs(const QStringList &libs)
+{
+	if (libs.isEmpty()) {
+		return QString();
+	}
+	QSet<QString> pathSet;
+	QStringList paths;
+	QStringList ret;
+	foreach (const QString &arg, libs) {
+		if (arg.startsWith(QLatin1String("-L"))) {
+			QString path = qc_escape_string_var(arg.mid(2));
+			if (!pathSet.contains(path)) {
+				pathSet.insert(path);
+				paths.append(path);
+			}
+		} else if (arg.startsWith(QLatin1String("-l"))) {
+			ret.append(arg);
+		} else {
+			ret.append(qc_escape_string_var(arg));
+		}
+	}
+	return QLatin1String(" -L") + paths.join(QLatin1String(" -L")) + QLatin1Char(' ') + ret.join(QLatin1Char(' '));
 }
 
 //----------------------------------------------------------------------------
@@ -375,14 +520,34 @@ QString Conf::qvar(const QString &s)
 	return vars.value(s);
 }
 
+QString Conf::normalizePath(const QString &s) const
+{
+	return qc_normalize_path(s);
+}
+
+QString Conf::escapeQmakeVar(const QString &s) const
+{
+	return qc_escape_string_var(s);
+}
+
+QString Conf::escapedIncludes() const
+{
+	return qc_prepare_includepath(INCLUDEPATH);
+}
+
+QString Conf::escapedLibs() const
+{
+	return qc_prepare_libs(LIBS);
+}
+
 QString Conf::expandIncludes(const QString &inc)
 {
-	return QString("-I") + inc;
+	return QLatin1String("-I") + inc;
 }
 
 QString Conf::expandLibs(const QString &lib)
 {
-	return QString("-L") + lib;
+	return QLatin1String("-L") + lib;
 }
 
 int Conf::doCommand(const QString &s, QByteArray *out)
@@ -412,6 +577,10 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 #else
 	QDir tmp(".qconftemp");
 #endif
+	QStringList normalizedLibs;
+	foreach (const QString &l, qc_splitflags(libs)) {
+		normalizedLibs.append(qc_normalize_path(l));
+	}
 
 	if(!tmp.mkdir("atest"))
 	{
@@ -447,11 +616,12 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 		"CONFIG  -= qt app_bundle\n"
 		"DESTDIR  = $$PWD\n"
 		"SOURCES += atest.cpp\n");
-	QString inc = incs.join(" ");
+	QString inc = qc_prepare_includepath(incs);
 	if(!inc.isEmpty())
 		pro += "INCLUDEPATH += " + inc + '\n';
-	if(!libs.isEmpty())
-		pro += "LIBS += " + libs + '\n';
+	QString escaped_libs = qc_prepare_libs(normalizedLibs);
+	if(!escaped_libs.isEmpty())
+		pro += "LIBS += " + escaped_libs + '\n';
 	pro += proextra;
 
 	fname = dir.filePath("atest.pro");
@@ -512,10 +682,7 @@ bool Conf::doCompileAndLink(const QString &filedata, const QStringList &incs, co
 
 bool Conf::checkHeader(const QString &path, const QString &h)
 {
-	QFileInfo fi(path + '/' + h);
-	if(fi.exists())
-		return true;
-	return false;
+	return QDir(path).exists(h);
 }
 
 bool Conf::findHeader(const QString &h, const QStringList &ext, QString *inc)
@@ -731,19 +898,20 @@ void Conf::addDefine(const QString &str)
 
 void Conf::addLib(const QString &str)
 {
-	if(LIBS.isEmpty())
-		LIBS = str;
-	else
-		LIBS += QString(" ") + str;
+	QStringList libs = qc_splitflags(str);
+	foreach (const QString &lib, libs) {
+		if (lib.startsWith("-l")) {
+			LIBS.append(lib);
+		} else {
+			LIBS.append(qc_normalize_path(lib)); // we don't care about -L prefix since normalier does not touch it.
+		}
+	}
 	debug(QString("LIBS += %1").arg(str));
 }
 
 void Conf::addIncludePath(const QString &str)
 {
-	if(INCLUDEPATH.isEmpty())
-		INCLUDEPATH = str;
-	else
-		INCLUDEPATH += QString(" ") + str;
+	INCLUDEPATH.append(qc_normalize_path(str));
 	debug(QString("INCLUDEPATH += %1").arg(str));
 }
 
@@ -850,9 +1018,9 @@ int main(int argc, char ** argv)
 		if(!conf->DEFINES.isEmpty())
 			str += "DEFINES += " + conf->DEFINES + '\n';
 		if(!conf->INCLUDEPATH.isEmpty())
-			str += "INCLUDEPATH += " + conf->INCLUDEPATH + '\n';
+			str += "INCLUDEPATH += " + qc_prepare_includepath(conf->INCLUDEPATH) + '\n';
 		if(!conf->LIBS.isEmpty())
-			str += "LIBS += " + conf->LIBS + '\n';
+			str += "LIBS += " + qc_prepare_libs(conf->LIBS) + '\n';
 		if(!conf->extra.isEmpty())
 			str += conf->extra;
 		str += '\n';
