@@ -44,7 +44,7 @@ QString escapeFile(const QString &str)
 {
 	QString out;
 	for(int n = 0; n < (int)str.length(); ++n) {
-		if(str[n] == '$' || str[n] == '`')
+		if(str[n] == '$' || str[n] == '`' || str[n] == '\\')
 			out += '\\';
 		out += str[n];
 	}

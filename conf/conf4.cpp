@@ -76,7 +76,7 @@ QString qc_findprogram(const QString &prog)
 QString qc_findself(const QString &argv0)
 {
 #ifdef Q_OS_WIN
-		if(argv0.contains('\\'))
+	if(argv0.contains('\\'))
 #else
 	if(argv0.contains('/'))
 #endif
@@ -325,7 +325,7 @@ QString qc_prepare_includepath(const QStringList &incs)
 	foreach (const QString &path, incs) {
 		ret.append(qc_escape_string_var(path));
 	}
-	return ret.join(QLatin1Char(' '));
+	return ret.join(QLatin1String(" "));
 }
 
 // escapes each path in libs and to make it suiable for LIBS var
@@ -351,7 +351,7 @@ QString qc_prepare_libs(const QStringList &libs)
 			ret.append(qc_escape_string_var(arg));
 		}
 	}
-	return QLatin1String(" -L") + paths.join(QLatin1String(" -L")) + QLatin1Char(' ') + ret.join(QLatin1Char(' '));
+	return QLatin1String(" -L") + paths.join(QLatin1String(" -L")) + QLatin1Char(' ') + ret.join(QLatin1String(" "));
 }
 
 //----------------------------------------------------------------------------
@@ -561,7 +561,7 @@ int Conf::doCommand(const QString &s, QByteArray *out)
 int Conf::doCommand(const QString &prog, const QStringList &args, QByteArray *out)
 {
 	QString fullcmd = prog;
-	QString argstr = args.join(" ");
+	QString argstr = args.join(QLatin1String(" "));
 	if(!argstr.isEmpty())
 		fullcmd += QString(" ") + argstr;
 	debug(QString("[%1]").arg(fullcmd));
@@ -819,7 +819,7 @@ bool Conf::findFooConfig(const QString &path, QString *version, QStringList *inc
 	*version = version_out;
 	*incs = incs_out;
 	*libs = libs_out;
-	*otherflags = otherflags_out.join(" ");
+	*otherflags = otherflags_out.join(QLatin1String(" "));
 	return true;
 }
 
@@ -883,7 +883,7 @@ bool Conf::findPkgConfig(const QString &name, VersionMode mode, const QString &r
 	*version = version_out;
 	*incs = incs_out;
 	*libs = libs_out;
-	*otherflags = otherflags_out.join(" ");
+	*otherflags = otherflags_out.join(QLatin1String(" "));
 	return true;
 }
 
