@@ -158,14 +158,19 @@ fi
 
 printf "Verifying Qt 4 build environment ... "
 
+QTSEARCHTTEXT="$QC_QTSELECT"
+[ -z "$QC_QTSELECT" ] && QTSEARCHTTEXT="4 or 5"
+
 # run qmake -v and check version
 qmake_check_v4() {
 	if [ -x "$1" ]; then
-       local v=`$1 -query QT_VERSION 2>&1`
-       vmaj="${v%%.*}"
-       case "${v}" in ?.?.?) [ "$vmaj" = 4 -o "$vmaj" = 5 ] && return 0 ;; esac
+		local v=`$1 -query QT_VERSION 2>&1`
+		vmaj="${v%%.*}"
+		case "${v}" in ?.?.?) [ -z "$QC_QTSELECT" ] && [ "$vmaj" = 4 -o "$vmaj" = 5 ] && return 0;
+			 [ -n "$QC_QTSELECT" ] && [ "$vmaj" = "$QC_QTSELECT" ] && return 0; ;;
+		esac
 		if [ "$QC_VERBOSE" = "Y" ]; then
-			echo "Warning: $1 not for Qt 4 or 5"
+			echo "Warning: $1 not for Qt ${QTSEARCHTTEXT}"
 		fi
 	fi
 	return 1
@@ -176,10 +181,18 @@ if [ "$QC_VERBOSE" = "Y" ]; then
 fi
 
 qm=""
-names="qmake-qt5 qmake5 qmake-qt4 qmake4 qmake"
+qt4_names="qmake-qt4 qmake4"
+qt5_names="qmake-qt5 qmake5"
+names="qmake"
+if [ -z "$QC_QTSELECT" ]; then
+	names="${qt5_names} ${qt4_names} $names"
+else
+	[ "$QC_QTSELECT" = "4" ] && names="${qt4_names} $names"
+	[ "$QC_QTSELECT" -ge "5" ] && names="${qt5_names} $names"
+fi
 
-# qt4 check: --qtdir
 if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
+# qt4 check: --qtdir
 	for n in $names; do
 		qstr=$EX_QTDIR/bin/$n
 		if qmake_check_v4 "$qstr"; then
@@ -187,13 +200,12 @@ if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
 			break;
 		fi
 	done
-fi
-if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via --qtdir"
-fi
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via --qtdir"
+	fi
 
+elif [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 # qt4 check: QTDIR
-if [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 	for n in $names; do
 		qstr=$QTDIR/bin/$n
 		if qmake_check_v4 "$qstr"; then
@@ -201,9 +213,27 @@ if [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 			break;
 		fi
 	done
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via \$QTDIR"
+	fi
+
+else
+
+# Try all other implicit checks
+
+# qtchooser
+if [ -z "$qm" ]; then
+	qtchooser=$($WHICH qtchooser 2>/dev/null)
+	if [ ! -z "$qtchooser" ]; then
+		cmd="$qtchooser -run-tool=qmake -qt=${QC_QTSELECT}"
+		if qmake_check_v4 "$cmd"; then
+			qm="$cmd"
+			break;
+		fi
+	fi
 fi
 if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via \$QTDIR"
+	echo "Warning: qmake not found via qtchooser"
 fi
 
 # qt4 check: pkg-config
@@ -237,6 +267,9 @@ if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
 	echo "Warning: qmake not found via \$PATH"
 fi
 
+# end of implicit checks
+fi
+
 if [ -z "$qm" ]; then
 	if [ "$QC_VERBOSE" = "Y" ]; then
 		echo " -> fail"
@@ -244,7 +277,7 @@ if [ -z "$qm" ]; then
 		echo "fail"
 	fi
 	printf "\n"
-	printf "Reason: Unable to find the 'qmake' tool for Qt 4.\n"
+	printf "Reason: Unable to find the 'qmake' tool for Qt ${QTSEARCHTTEXT}.\n"
 	printf "\n"
 	show_qt_info
 	exit 1;
