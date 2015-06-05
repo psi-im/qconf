@@ -232,8 +232,9 @@ if [ -z "$qm" ]; then
 	qtchooser=$($WHICH qtchooser 2>/dev/null)
 	if [ ! -z "$qtchooser" ]; then
 		cmd="$qtchooser -run-tool=qmake -qt=${QC_QTSELECT}"
-		if qmake_check_v4 "$cmd"; then
-			qm="$cmd"
+		qtbins="$($cmd -query QT_INSTALL_BINS 2>/dev/null)"
+		if [ -n "$qtbins" ] && qmake_check_v4 "$qtbins/qmake"; then
+			qm="$qtbins/qmake"
 			break;
 		fi
 	fi
@@ -1565,7 +1566,7 @@ QC_COMMAND=$0
 export QC_COMMAND
 QC_PROFILE=qconf.pro
 export QC_PROFILE
-QC_QMAKE=$qm
+QC_QMAKE="$qm"
 export QC_QMAKE
 QC_QMAKESPEC=$qm_spec
 export QC_QMAKESPEC

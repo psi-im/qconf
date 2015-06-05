@@ -924,8 +924,9 @@ private:
 		"	qtchooser=$($WHICH qtchooser 2>/dev/null)\n"
 		"	if [ ! -z \"$qtchooser\" ]; then\n"
 		"		cmd=\"$qtchooser -run-tool=qmake -qt=${QC_QTSELECT}\"\n"
-		"		if qmake_check_v4 \"$cmd\"; then\n"
-		"			qm=\"$cmd\"\n"
+		"		qtbins=\"$($cmd -query QT_INSTALL_BINS 2>/dev/null)\"\n"
+		"		if [ -n \"$qtbins\" ] && qmake_check_v4 \"$qtbins/qmake\"; then\n"
+		"			qm=\"$qtbins/qmake\"\n"
 		"			break;\n"
 		"		fi\n"
 		"	fi\n"
@@ -1110,7 +1111,7 @@ private:
 			str += QString("export QC_COMMAND\n");
 			str += QString("QC_PROFILE=%1\n").arg(profile);
 			str += QString("export QC_PROFILE\n");
-			str += QString("QC_QMAKE=$qm\n");
+			str += QString("QC_QMAKE=\"$qm\"\n");
 			str += QString("export QC_QMAKE\n");
 			str += QString("QC_QMAKESPEC=$qm_spec\n");
 			str += QString("export QC_QMAKESPEC\n");
