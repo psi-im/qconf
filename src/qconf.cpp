@@ -414,6 +414,7 @@ public:
 			str += QString("export %1\n").arg(i.var);
 		}
 		str += "export QC_VERBOSE\n"; // export verbose flag also
+		str += "export QC_QTSELECT\n";
 
 		str += genDoQConf();
 
@@ -558,6 +559,7 @@ private:
 
 		QList<ConfUsageOpt> list = optsToUsage(mainopts);
 		list += ConfUsageOpt("verbose",  "",   "Show extra configure output.");
+		list += ConfUsageOpt("qtselect",  "N",   "Select major Qt verion (4 or 5).");
 		list += ConfUsageOpt("help",   "",     "This help text.");
 		str += genUsageSection("Main options:", list);
 
@@ -583,6 +585,7 @@ private:
 
 		QList<ConfUsageOpt> list = optsToUsage(mainopts);
 		list += ConfUsageOpt("verbose",  "",   "Show extra configure output.");
+		list += ConfUsageOpt("qtselect",  "N",   "Select major Qt verion (4 or 5).");
 		list += ConfUsageOpt("help",   "",     "This help text.");
 		str += genUsageSection("Main options:", list);
 
@@ -724,6 +727,11 @@ private:
 		char argsfooter[] =
 		"		--verbose)\n"
 		"			QC_VERBOSE=\"Y\"\n"
+		"			shift\n"
+		"			;;\n"
+		"		--qtselect*)\n"
+		"			[ \"$1\" = \"--qtselect\" ] && { shift; optarg=\"$1\"; }\n"
+		"			QC_QTSELECT=\"${optarg}\"\n"
 		"			shift\n"
 		"			;;\n"
 		"		--help) show_usage; exit ;;\n"

@@ -15,6 +15,7 @@ Main options:
   --datadir=[path]    Directory for data.  Default: PREFIX/share
   --qtdir=[path]      Directory where Qt is installed.
   --verbose           Show extra configure output.
+  --qtselect=[N]      Select major Qt verion (4 or 5).
   --help              This help text.
 
 EOT
@@ -134,6 +135,11 @@ while [ $# -gt 0 ]; do
 
 		--verbose)
 			QC_VERBOSE="Y"
+			shift
+			;;
+		--qtselect*)
+			[ "$1" = "--qtselect" ] && { shift; optarg="$1"; }
+			QC_QTSELECT="${optarg}"
 			shift
 			;;
 		--help) show_usage; exit ;;
@@ -1522,6 +1528,7 @@ export BINDIR
 export DATADIR
 export EX_QTDIR
 export QC_VERBOSE
+export QC_QTSELECT
 rm -rf ".qconftemp"
 (
 	mkdir ".qconftemp"
