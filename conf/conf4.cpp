@@ -1029,6 +1029,10 @@ int main(int argc, char ** argv)
 			str += conf->extra;
 		str += '\n';
 
+		var = qc_getenv("QC_EXTRACONF");
+		if (!var.isEmpty())
+			str += ("\n# Extra conf from command line\n" + var + "\n");
+
 		QByteArray cs = str.toLatin1();
 		f.write(cs);
 		f.close();

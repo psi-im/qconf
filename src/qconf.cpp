@@ -334,6 +334,8 @@ public:
 		if(libmode)
 			mainopts += ConfOpt("static", QString(), "QC_STATIC", "Create a static library instead of shared.");
 
+		mainopts += ConfOpt("extraconf", "conf", "QC_EXTRACONF", "Extra configuration for nonstandard cases");
+
 		QString str;
 		str += genHeader();
 		str += genUsage();
@@ -437,6 +439,8 @@ public:
 
 		if(libmode)
 			mainopts += ConfOpt("static", QString(), "QC_STATIC", "Create a static library instead of shared.");
+
+		mainopts += ConfOpt("extraconf", "conf", "QC_EXTRACONF", "Extra configuration for nonstandard cases");
 
 		// combine main and extra opts together
 		all = mainopts + appopts + depopts;
