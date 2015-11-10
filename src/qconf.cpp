@@ -858,6 +858,7 @@ private:
 	QString genQt4Checks()
 	{
 		QString str =
+		"[ -z \"$QC_QTSELECT\" ] && QC_QTSELECT=\"$QT_SELECT\"\n"
 		"QTSEARCHTTEXT=\"$QC_QTSELECT\"\n"
 		"[ -z \"$QC_QTSELECT\" ] && QTSEARCHTTEXT=\"4 or 5\"\n"
 		"\n"
