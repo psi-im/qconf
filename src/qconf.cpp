@@ -759,7 +759,7 @@ private:
 		"# run qmake -v and check version\n"
 		"qmake_check_v4() {\n"
 		"	if [ -x \"$1\" ]; then\n"
-		"		local v=`$1 -query QT_VERSION 2>&1`\n"
+		"		local v=`\"$1\" -query QT_VERSION 2>&1`\n"
 		"		vmaj=\"${v%%.*}\"\n"
 		"		case \"${v}\" in ?.?.?) [ -z \"$QC_QTSELECT\" ] && [ \"$vmaj\" = 4 -o \"$vmaj\" = 5 ] && return 0;\n"
 		"			 [ -n \"$QC_QTSELECT\" ] && [ \"$vmaj\" = \"$QC_QTSELECT\" ] && return 0; ;;\n"
@@ -885,7 +885,7 @@ private:
 		"	exit 1;\n"
 		"fi\n"
 		"if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
-		"	echo qmake found in $qm\n"
+		"	echo qmake found in \"$qm\"\n"
 		"fi\n\n";
 
 		str +=
@@ -896,7 +896,7 @@ private:
 		"		READLINK=`$WHICH readlink`\n"
 		"	fi\n"
 		"	if [ ! -z \"$READLINK\" ]; then\n"
-		"		qt_mkspecsdir=`$qm -query QT_INSTALL_DATA`/mkspecs\n"
+		"		qt_mkspecsdir=`\"$qm\" -query QT_INSTALL_DATA`/mkspecs\n"
 		"		if [ -d \"$qt_mkspecsdir\" ] && [ -h \"$qt_mkspecsdir/default\" ]; then\n"
 		"			defmakespec=`$READLINK $qt_mkspecsdir/default`\n"
 		"		fi\n"
@@ -939,9 +939,9 @@ private:
 		if(qt4) {
 			str +=
 			"	if [ ! -z \"$qm_spec\" ]; then\n"
-			"		$qm -spec $qm_spec conf4.pro >/dev/null\n"
+			"		\"$qm\" -spec $qm_spec conf4.pro >/dev/null\n"
 			"	else\n"
-			"		$qm conf4.pro >/dev/null\n"
+			"		\"$qm\" conf4.pro >/dev/null\n"
 			"	fi\n"
 			"	$MAKE clean >/dev/null 2>&1\n"
 			"	$MAKE >../conf.log 2>&1\n";
@@ -1037,7 +1037,7 @@ private:
 	{
 		QString str;
 		str += "# run qmake\n";
-		str += QString("$qm %1\n").arg(profile);
+		str += QString("\"$qm\" %1\n").arg(profile);
 		str +=
 		"if [ \"$?\" != \"0\" ]; then\n"
 		"	echo\n"
