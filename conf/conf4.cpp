@@ -290,11 +290,13 @@ QString qc_normalize_path(const QString &str)
 	QString path = str.trimmed();
 	path = qc_trim_char(path, QLatin1Char('"'));
 	path = qc_trim_char(path, QLatin1Char('\''));
-#ifdef Q_OS_WIN
-	QLatin1Char nativeSep('\\');
-	path.replace(QLatin1Char('/'), QLatin1Char('\\'));
-#else
+
+	// It's OK to use unix style'/' pathes on windows Qt handles this without any problems.
+	// Using Windows-style '\\' can leads strange compilation error with MSYS which uses
+	// unix style.
 	QLatin1Char nativeSep('/');
+#ifdef Q_OS_WIN
+	path.replace(QLatin1Char('\\'), QLatin1Char('/'));
 #endif
 	// trim trailing slashes
 	while (path.length() && path[path.length() - 1] == nativeSep) {
