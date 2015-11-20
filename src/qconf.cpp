@@ -196,6 +196,7 @@ const char *qt4_info_str_win =
 	"\n"
 	" 1) --qtdir is set to the location of Qt\n"
 	" 2) %QTDIR% is set to the location of Qt\n"
+	" 3) qmake is in the %PATH%\n"
 	"\n"
 	"This program will use the first one it finds to be true, checked in the above order.\n"
 	"\n";
