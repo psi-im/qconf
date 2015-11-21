@@ -31,6 +31,8 @@ static char *qconftemp_path = ".qconftemp";
 
 static int qc_verbose = 0;
 static char *ex_qtdir = 0;
+static char *qc_qtselect = 0;
+static char *qtsearchtext="4 or 5";
 
 enum ArgType
 {
@@ -357,6 +359,49 @@ static char *check_qmake_path(const char *qtdir)
 	}
 }
 
+int check_qtversion(char *path, char *version)
+{
+	FILE *file;
+	int res = 0;
+
+	if (version)
+	{
+		char command[PATH_MAX];
+		int cnt = snprintf(command, sizeof(command) - 1, "%s -query QT_VERSION", path);
+		if (cnt > 0 && cnt < (int)sizeof(command))
+		{
+			command[sizeof(command) - 1] = '\0'; // To be sure line has null-terminator
+			file = popen(command, "r");
+			if (file)
+			{
+				char buf[20]; // version string output always small
+				if (fread(buf, 1, sizeof(buf), file) > 0)
+				{
+					buf[sizeof(buf) - 1] = '\0';
+					int at = index_of(buf, '.');
+					if (at > 0)
+					{
+						// Compare major version
+						buf[at] = '\0';
+						res = !strcmp(version, buf);
+						if (!res && qc_verbose)
+						{
+							printf("Warning: %s not for Qt %s\n", path, qtsearchtext);
+						}
+					}
+				}
+				pclose(file);
+			}
+		}
+	}
+	else
+	{
+		res = 1;
+	}
+
+	return res;
+}
+
 static char *find_qmake()
 {
 	char *qtdir;
@@ -364,12 +409,25 @@ static char *find_qmake()
 	FILE *qmp;
 	char try_syspath = 1;
 
+	if (!qc_qtselect)
+	{
+		qc_qtselect = get_envvar("QT_SELECT");
+		if (qc_qtselect)
+			qtsearchtext = qc_qtselect;
+	}
+
+
 	qtdir = ex_qtdir;
 	if(qtdir)
 	{
 		path = check_qmake_path(qtdir);
+
 		if(path)
+		{
+			if (!check_qtversion(path, qc_qtselect))
+				return NULL;
 			return path;
+		}
 		try_syspath = 0;
 	}
 	if(qc_verbose)
@@ -379,8 +437,13 @@ static char *find_qmake()
 	if(qtdir)
 	{
 		path = check_qmake_path(qtdir);
+
 		if(path)
+		{
+			if (!check_qtversion(path, qc_qtselect))
+				return NULL;
 			return path;
+		}
 		try_syspath = 0;
 	}
 	if(qc_verbose)
@@ -416,6 +479,8 @@ static char *find_qmake()
 #endif
 				char *ndname = separators_to_native(dname);
 				free(dname);
+				if (!check_qtversion(dname, qc_qtselect))
+					return NULL;
 				return ndname;
 			}
 			free(dname);
@@ -717,7 +782,7 @@ static int do_conf(qcdata_t *q, const char *argv0)
 		else
 			printf("fail\n");
 		printf("\n");
-		printf("Reason: Unable to find the 'qmake' tool for Qt 4.\n");
+		printf("Reason: Unable to find the 'qmake' tool for Qt %s.\n", qtsearchtext);
 		printf("\n");
 		printf("%s", q->qtinfo);
 		return 0;
@@ -859,6 +924,14 @@ int main(int argc, char **argv)
 			qc_verbose = 1;
 			set_envvar("QC_VERBOSE", "Y");
 		}
+		else if(strcmp(var, "qtselect") == 0)
+		{
+			if (val && strlen(val))
+			{
+				qc_qtselect = strdup(val);
+				qtsearchtext = qc_qtselect;
+			}
+		}
 		else
 		{
 			at = find_arg(q->args, q->args_count, var);
@@ -899,6 +972,10 @@ int main(int argc, char **argv)
 		qcdata_delete(q);
 		if(ex_qtdir)
 			free(ex_qtdir);
+
+		if(qc_qtselect)
+			free(qc_qtselect);
+		
 		return 1;
 	}
 
@@ -907,6 +984,8 @@ int main(int argc, char **argv)
 	if(ex_qtdir)
 		free(ex_qtdir);
 
+	if(qc_qtselect)
+		free(qc_qtselect);
 	if(n)
 		return 0;
 	else
