@@ -108,8 +108,3 @@ A: Main variables: PREFIX, BINDIR, LIBDIR, QTDIR.
    All other variables are written as QC_FOO, where FOO is the option name
    in all caps.  Boolean variables are set to 'Y' when flagged.
 
-Q: How do I generate scripts for Qt 3 projects?
-A: Include the <qt3/> element in the project's .qc file.  Modules will not
-   be able to take advantage of most new qconf features, and everything
-   should work as they did with qconf 1.1.
-

@@ -404,10 +404,6 @@ public:
 			if(!byoq)
 				str += genQt4Checks();
 		}
-		else {
-			str += "printf \"Verifying Qt 3.x Multithreaded (MT) build environment ... \"\n\n";
-			str += genQt3Checks();
-		}
 
 		str += genEmbeddedFiles();
 
@@ -512,8 +508,6 @@ private:
 		//"else\n"
 		if(qt4)
 			str += "echo \"Good, your configure finished.  Now run $MAKE.\"\n";
-		else
-			str += "echo \"Good, your configure finished.  Now run 'make'.\"\n";
 		//"fi\n"
 		str += "echo\n";
 		return str;
@@ -755,106 +749,6 @@ private:
 		return str;
 	}
 
-	QString genQt3Checks()
-	{
-		QStringList qtloc;
-		qtloc += "/usr/lib/qt";
-		qtloc += "/usr/share/qt";
-		qtloc += "/usr/share/qt3";
-		qtloc += "/usr/local/lib/qt";
-		qtloc += "/usr/local/share/qt";
-		qtloc += "/usr/lib/qt3";
-		qtloc += "/usr/local/lib/qt3";
-		qtloc += "/usr/X11R6/share/qt";
-		qtloc += "/usr/qt/3";
-
-		QString for_items;
-		for(QStringList::ConstIterator it = qtloc.begin(); it != qtloc.end(); ++it) {
-			for_items += (*it) + ' ';
-		}
-
-		QString str =
-		"if [ -z \"$QTDIR\" ]; then\n"
-		"	if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
-		"		echo \\$QTDIR not set... trying to find Qt manually\n"
-		"	fi\n";
-		str += QString(
-		"	for p in %1; do\n"
-		).arg(for_items);
-		str +=
-		"		if [ -d \"$p/mkspecs\" ]; then\n"
-		"			QTDIR=$p\n"
-		"			break;\n"
-		"		fi;\n"
-		"	done\n"
-		"	if [ -z \"$QTDIR\" ]; then\n"
-		"		echo fail\n"
-		"		echo\n"
-		"		echo \"Unable to find Qt 'mkspecs'.  Perhaps you need to\"\n"
-		"		echo \"install the Qt 3 development utilities.  You may download\"\n"
-		"		echo \"them either from the vendor of your operating system\"\n"
-		"		echo \"or from http://www.trolltech.com/\"\n"
-		"		echo\n"
-		"		echo \"If you're sure you have the Qt development utilities\"\n"
-		"		echo \"installed, you might try using the --qtdir option.\"\n"
-		"		echo\n"
-		"		exit 1;\n"
-		"	fi\n"
-		"	if [ ! -x \"$QTDIR/bin/moc\" ]; then\n"
-		"		m=`which moc 2>/dev/null`\n"
-		"		if [ ! -x \"$m\" ]; then\n"
-		"			echo fail\n"
-		"			echo\n"
-		"			echo \"We found Qt in $QTDIR, but we were unable to locate\"\n"
-		"			echo \"the moc utility.  It was not found in $QTDIR/bin\"\n"
-		"			echo \"nor in PATH.  This seems to be a very unusual setup.\"\n"
-		"			echo \"You might try using the --qtdir option.\"\n"
-		"			echo\n"
-		"			exit 1;\n"
-		"		fi\n"
-		"		qtpre=`echo $m | awk '{ n = index($0, \"/bin/moc\"); if (!n) { exit 1; } print substr($0, 0, n-1); exit 0; }' 2>/dev/null`\n"
-		"		ret=\"$?\"\n"
-		"		if [ \"$ret\" != \"0\" ]; then\n"
-		"			echo fail\n"
-		"			echo\n"
-		"			echo \"We found Qt in $QTDIR, but the location of moc\"\n"
-		"			echo \"($m) is not suitable for use with this build system.\"\n"
-		"			echo \"This is a VERY unusual and likely-broken setup.  You\"\n"
-		"			echo \"should contact the maintainer of your Qt package.\"\n"
-		"			echo\n"
-		"			exit 1;\n"
-		"		fi\n"
-		"		QTDIR=$qtpre\n"
-		"	fi\n"
-		"fi\n"
-		"\n"
-		"if [ ! -x \"$QTDIR/bin/qmake\" ]; then\n"
-		"	if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
-		"		echo Warning: qmake not in \\$QTDIR/bin/qmake\n"
-		"		echo trying to find it in \\$PATH\n"
-		"	fi\n"
-		"	qm=`which qmake 2>/dev/null`\n"
-		"	if [ -x \"$qm\" ]; then\n"
-		"		if [ \"$QC_VERBOSE\" = \"Y\" ]; then\n"
-		"			echo qmake found in $qm\n"
-		"		fi\n"
-		"	else\n"
-		"		echo fail\n"
-		"		echo\n"
-		"		echo Sorry, you seem to have a very unusual setup,\n"
-		"		echo or I missdetected \\$QTDIR=$QTDIR\n"
-		"		echo\n"
-		"		echo Please set \\$QTDIR manually and make sure that\n"
-		"		echo \\$QTDIR/bin/qmake exists.\n"
-		"		echo\n"
-		"		exit 1;\n"
-		"	fi\n"
-		"else\n"
-		"	qm=$QTDIR/bin/qmake\n"
-		"fi\n\n";
-		return str;
-	}
-
 	QString genQt4Checks()
 	{
 		QString str =
@@ -1052,12 +946,6 @@ private:
 			"	$MAKE clean >/dev/null 2>&1\n"
 			"	$MAKE >../conf.log 2>&1\n";
 		}
-		else {
-			str +=
-			"	$qm conf.pro >/dev/null\n"
-			"	QTDIR=$QTDIR make clean >/dev/null 2>&1\n"
-			"	QTDIR=$QTDIR make >../conf.log 2>&1\n";
-		}
 		str += ")\n\n";
 
 		if(qt4) {
@@ -1089,26 +977,6 @@ private:
 			str +=
 			"	exit 1;\n"
 			"fi\n\n";
-		}
-		else {
-			str += QString(
-			"if [ \"$?\" != \"0\" ]; then\n"
-			"	%1\n"
-			"	echo fail\n"
-			"	echo\n"
-			"	echo \"There was an error compiling 'conf'.  Be sure you have a proper\"\n"
-			"	echo \"Qt 3.x Multithreaded (MT) build environment set up.  This\"\n"
-			"	echo \"means not just Qt, but also a C++ compiler, the 'make' command,\"\n"
-			"	echo \"and any other packages necessary to compile C++ programs.\"\n"
-			"	echo \"See conf.log for details.\"\n"
-			"	if [ ! -f \"$QTDIR/lib/libqt-mt.so.3\" ]; then\n"
-			"		echo\n"
-			"		echo \"One possible reason is that you don't have\"\n"
-			"		echo \"libqt-mt.so.3 installed in $QTDIR/lib/.\"\n"
-			"	fi\n"
-			"	echo\n"
-			"	exit 1;\n"
-			"fi\n\n").arg(cleanup);
 		}
 
 		if(qt4) {
@@ -1143,14 +1011,10 @@ private:
 			"			echo \"fail\"\n"
 			"		fi\n";
 		}
-		else
-			str += "		echo fail\n";
 
 		str += "		echo\n";
 		if(qt4)
 			str += "		echo \"Reason: Unexpected error launching 'conf'\"\n";
-		else
-			str += "		echo \"Unexpected error launching 'conf'\"\n";
 		str += "		echo\n";
 		str += "		exit 1;\n";
 		str += "	fi\n";
