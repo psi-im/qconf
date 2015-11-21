@@ -24,6 +24,12 @@ EOT
 
 # which/make detection adapted from Qt
 which_command() {
+	ALL_MATCHES=
+	if [ "$1" = "-a" ]; then
+		ALL_MATCHES="-a"
+		shift
+	fi
+
 	OLD_HOME=$HOME
 	HOME=/dev/null
 	export HOME
@@ -44,33 +50,29 @@ which_command() {
 		fi
 	fi
 
+	RET_CODE=1
 	if [ -z "$WHICH" ]; then
 		OLD_IFS=$IFS
 		IFS=:
 		for a in $PATH; do
 			if [ -x $a/$1 ]; then
 				echo "$a/$1"
-				IFS=$OLD_IFS
-				export IFS
-				HOME=$OLD_HOME
-				export HOME
-				return 0
+				RET_CODE=0
+				[ -z "$ALL_MATCHES" ] && break
 			fi
 		done
 		IFS=$OLD_IFS
 		export IFS
 	else
-		a=`"$WHICH" "$1" 2>/dev/null`
+		a=`"$WHICH" "$ALL_MATCHES" "$1" 2>/dev/null`
 		if [ ! -z "$a" -a -x "$a" ]; then
 			echo "$a"
-			HOME=$OLD_HOME
-			export HOME
-			return 0
+			RET_CODE=0
 		fi
 	fi
 	HOME=$OLD_HOME
 	export HOME
-	return 1
+	return $RET_CODE
 }
 WHICH=which_command
 
@@ -143,8 +145,7 @@ while [ $# -gt 0 ]; do
 			QC_VERBOSE="Y"
 			shift
 			;;
-		--qtselect*)
-			[ "$1" = "--qtselect" ] && { shift; optarg="$1"; }
+		--qtselect=*)
 			QC_QTSELECT="${optarg}"
 			shift
 			;;
@@ -171,13 +172,14 @@ fi
 
 printf "Verifying Qt 4 build environment ... "
 
+[ -z "$QC_QTSELECT" ] && QC_QTSELECT="$QT_SELECT"
 QTSEARCHTTEXT="$QC_QTSELECT"
 [ -z "$QC_QTSELECT" ] && QTSEARCHTTEXT="4 or 5"
 
 # run qmake -v and check version
 qmake_check_v4() {
 	if [ -x "$1" ]; then
-		local v=`$1 -query QT_VERSION 2>&1`
+		local v=`"$1" -query QT_VERSION 2>&1`
 		vmaj="${v%%.*}"
 		case "${v}" in ?.?.?) [ -z "$QC_QTSELECT" ] && [ "$vmaj" = 4 -o "$vmaj" = 5 ] && return 0;
 			 [ -n "$QC_QTSELECT" ] && [ "$vmaj" = "$QC_QTSELECT" ] && return 0; ;;
@@ -205,7 +207,7 @@ else
 fi
 
 if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
-# qt4 check: --qtdir
+	# qt4 check: --qtdir
 	for n in $names; do
 		qstr=$EX_QTDIR/bin/$n
 		if qmake_check_v4 "$qstr"; then
@@ -218,7 +220,7 @@ if [ -z "$qm" ] && [ ! -z "$EX_QTDIR" ]; then
 	fi
 
 elif [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
-# qt4 check: QTDIR
+	# qt4 check: QTDIR
 	for n in $names; do
 		qstr=$QTDIR/bin/$n
 		if qmake_check_v4 "$qstr"; then
@@ -232,56 +234,59 @@ elif [ -z "$qm" ] && [ ! -z "$QTDIR" ]; then
 
 else
 
-# Try all other implicit checks
+	# Try all other implicit checks
 
-# qtchooser
-if [ -z "$qm" ]; then
-	qtchooser=$($WHICH qtchooser 2>/dev/null)
-	if [ ! -z "$qtchooser" ]; then
-		cmd="$qtchooser -run-tool=qmake -qt=${QC_QTSELECT}"
-		qtbins="$($cmd -query QT_INSTALL_BINS 2>/dev/null)"
-		if [ -n "$qtbins" ] && qmake_check_v4 "$qtbins/qmake"; then
-			qm="$qtbins/qmake"
-			break;
-		fi
-	fi
-fi
-if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via qtchooser"
-fi
-
-# qt4 check: pkg-config
-if [ -z "$qm" ]; then
-	str=`pkg-config QtCore --variable=exec_prefix 2>/dev/null`
-	if [ ! -z "$str" ]; then
-		for n in $names; do
-			qstr=$str/bin/$n
-			if qmake_check_v4 "$qstr"; then
-				qm=$qstr
+	# qtchooser
+	if [ -z "$qm" ]; then
+		qtchooser=$($WHICH qtchooser 2>/dev/null)
+		if [ ! -z "$qtchooser" ]; then
+			cmd="$qtchooser -run-tool=qmake -qt=${QC_QTSELECT}"
+			qtbins="$($cmd -query QT_INSTALL_BINS 2>/dev/null)"
+			if [ -n "$qtbins" ] && qmake_check_v4 "$qtbins/qmake"; then
+				qm="$qtbins/qmake"
 				break;
 			fi
+		fi
+	fi
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via qtchooser"
+	fi
+
+	# qt4 check: pkg-config
+	if [ -z "$qm" ]; then
+		str=`pkg-config QtCore --variable=exec_prefix 2>/dev/null`
+		if [ ! -z "$str" ]; then
+			for n in $names; do
+				qstr=$str/bin/$n
+				if qmake_check_v4 "$qstr"; then
+					qm=$qstr
+					break;
+				fi
+			done
+		fi
+	fi
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via pkg-config"
+	fi
+
+	# qt4 check: PATH
+	if [ -z "$qm" ]; then
+		for n in $names; do
+			qstr=`$WHICH -a $n 2>/dev/null`
+			for q in $qstr; do
+				if qmake_check_v4 "$q"; then
+					qm="$q"
+					break;
+				fi
+			done
+			[ -n "$qm" ] && break
 		done
 	fi
-fi
-if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via pkg-config"
-fi
+	if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
+		echo "Warning: qmake not found via \$PATH"
+	fi
 
-# qt4 check: PATH
-if [ -z "$qm" ]; then
-	for n in $names; do
-		qstr=`$WHICH $n 2>/dev/null`
-		if qmake_check_v4 "$qstr"; then
-			qm=$qstr
-			break;
-		fi
-	done
-fi
-if [ -z "$qm" ] && [ "$QC_VERBOSE" = "Y" ]; then
-	echo "Warning: qmake not found via \$PATH"
-fi
-
-# end of implicit checks
+	# end of implicit checks
 fi
 
 if [ -z "$qm" ]; then
@@ -297,7 +302,7 @@ if [ -z "$qm" ]; then
 	exit 1;
 fi
 if [ "$QC_VERBOSE" = "Y" ]; then
-	echo qmake found in $qm
+	echo qmake found in "$qm"
 fi
 
 # try to determine the active makespec
@@ -307,7 +312,7 @@ if [ -z "$defmakespec" ]; then
 		READLINK=`$WHICH readlink`
 	fi
 	if [ ! -z "$READLINK" ]; then
-		qt_mkspecsdir=`$qm -query QT_INSTALL_DATA`/mkspecs
+		qt_mkspecsdir=`"$qm" -query QT_INSTALL_DATA`/mkspecs
 		if [ -d "$qt_mkspecsdir" ] && [ -h "$qt_mkspecsdir/default" ]; then
 			defmakespec=`$READLINK $qt_mkspecsdir/default`
 		fi
@@ -748,11 +753,13 @@ QString qc_normalize_path(const QString &str)
 	QString path = str.trimmed();
 	path = qc_trim_char(path, QLatin1Char('"'));
 	path = qc_trim_char(path, QLatin1Char('\\''));
-#ifdef Q_OS_WIN
-	QLatin1Char nativeSep('\\\\');
-	path.replace(QLatin1Char('/'), QLatin1Char('\\\\'));
-#else
+
+	// It's OK to use unix style'/' pathes on windows Qt handles this without any problems.
+	// Using Windows-style '\\\\' can leads strange compilation error with MSYS which uses
+	// unix style.
 	QLatin1Char nativeSep('/');
+#ifdef Q_OS_WIN
+	path.replace(QLatin1Char('\\\\'), QLatin1Char('/'));
 #endif
 	// trim trailing slashes
 	while (path.length() && path[path.length() - 1] == nativeSep) {
@@ -1548,9 +1555,9 @@ rm -rf ".qconftemp"
 	gen_files ".qconftemp"
 	cd ".qconftemp"
 	if [ ! -z "$qm_spec" ]; then
-		$qm -spec $qm_spec conf4.pro >/dev/null
+		"$qm" -spec $qm_spec conf4.pro >/dev/null
 	else
-		$qm conf4.pro >/dev/null
+		"$qm" conf4.pro >/dev/null
 	fi
 	$MAKE clean >/dev/null 2>&1
 	$MAKE >../conf.log 2>&1
