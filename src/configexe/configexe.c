@@ -412,7 +412,7 @@ static char *find_qmake()
 
 	if (!qc_qtselect)
 	{
-		qc_qtselect = get_envvar("QT_SELECT");
+		qc_qtselect = strdup(get_envvar("QT_SELECT"));
 		if (qc_qtselect)
 			qtsearchtext = qc_qtselect;
 	}
@@ -421,8 +421,9 @@ static char *find_qmake()
 	qtdir = ex_qtdir;
 	if(qtdir)
 	{
-		qtdir = append_free(qtdir, "\\bin");
+		qtdir = append_free(strdup(qtdir), "\\bin");
 		path = check_qmake_path(qtdir);
+		free(qtdir);
 
 		if(path)
 		{
@@ -438,8 +439,9 @@ static char *find_qmake()
 	qtdir = get_envvar("QTDIR");
 	if(qtdir)
 	{
-		qtdir = append_free(qtdir, "\\bin");
+		qtdir = append_free(strdup(qtdir), "\\bin");
 		path = check_qmake_path(qtdir);
+		free(qtdir);
 
 		if(path)
 		{
@@ -454,7 +456,7 @@ static char *find_qmake()
 
 	/* if not set explicitly try something implicit */
 	if (try_syspath) {
-		char *paths = get_envvar("PATH");
+		char *paths = strdup(get_envvar("PATH"));
 		qtdir = paths;
 		while (1)
 		{
@@ -463,12 +465,17 @@ static char *find_qmake()
 				qtdir[at] = '\0';
 			path = check_qmake_path(qtdir);
 			if (path && check_qtversion(path, qc_qtselect))
+			{
+				free(paths);
 				return path;
+			}
+
 			if (at > 0)
 				qtdir += at + 1;
 			else
 				break;
 		}
+		free(paths);
 	}
 
 	if(qc_verbose)
