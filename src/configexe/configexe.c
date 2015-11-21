@@ -32,8 +32,8 @@ static char path_separator = ':';
 #endif
 
 static int qc_verbose = 0;
-static char *ex_qtdir = 0;
-static char *qc_qtselect = 0;
+static char *ex_qtdir = NULL;
+static char *qc_qtselect = NULL;
 static char *qtsearchtext="4 or 5";
 
 enum ArgType
