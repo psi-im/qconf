@@ -25,8 +25,10 @@ preserved.
 
 #ifdef QC_OS_WIN
 static char *qconftemp_path = "qconftemp";
+static char path_separator = ';';
 #else
 static char *qconftemp_path = ".qconftemp";
+static char path_separator = ':';
 #endif
 
 static int qc_verbose = 0;
@@ -344,9 +346,9 @@ static char *check_qmake_path(const char *qtdir)
 
 	str = separators_to_native(qtdir);
 #ifdef QC_OS_WIN
-	str = append_free(str, "\\bin\\qmake.exe");
+	str = append_free(str, "\\qmake.exe");
 #else
-	str = append_free(str, "/bin/qmake");
+	str = append_free(str, "/qmake");
 #endif
 	if(file_exists(str))
 	{
@@ -406,7 +408,6 @@ static char *find_qmake()
 {
 	char *qtdir;
 	char *path;
-	FILE *qmp;
 	char try_syspath = 1;
 
 	if (!qc_qtselect)
@@ -420,6 +421,7 @@ static char *find_qmake()
 	qtdir = ex_qtdir;
 	if(qtdir)
 	{
+		qtdir = append_free(qtdir, "\\bin");
 		path = check_qmake_path(qtdir);
 
 		if(path)
@@ -436,6 +438,7 @@ static char *find_qmake()
 	qtdir = get_envvar("QTDIR");
 	if(qtdir)
 	{
+		qtdir = append_free(qtdir, "\\bin");
 		path = check_qmake_path(qtdir);
 
 		if(path)
@@ -451,39 +454,20 @@ static char *find_qmake()
 
 	/* if not set explicitly try something implicit */
 	if (try_syspath) {
-		char *dname = 0;
-		int len;
-		qmp = popen("qmake -query QT_INSTALL_BINS", "r");
-		if (qmp) {
-			char buf[PATH_MAX];
-			int cnt;
-			while ((cnt = fread(buf, 1, PATH_MAX - 1, qmp))) {
-				buf[cnt] = 0;
-				if (!dname) {
-					dname = strdup(buf);
-				} else {
-					dname = append_free(dname, buf);
-				}
-			}
-			pclose(qmp);
-		}
-		if (dname) {
-			len = strlen(dname);
-			while (len && dname[len - 1] < ' ')
-				dname[--len] = '\0';
-			if (len && file_exists(dname)) {
-#ifdef QC_OS_WIN
-				dname = append_free(dname, "/qmake.exe"); /* it coud be *.cmd but we don't care */
-#else
-				dname = append_free(dname, "/qmake");
-#endif
-				char *ndname = separators_to_native(dname);
-				free(dname);
-				if (!check_qtversion(dname, qc_qtselect))
-					return NULL;
-				return ndname;
-			}
-			free(dname);
+		char *paths = get_envvar("PATH");
+		qtdir = paths;
+		while (1)
+		{
+			int at = index_of(qtdir, path_separator);
+			if (at > 0)
+				qtdir[at] = '\0';
+			path = check_qmake_path(qtdir);
+			if (path && check_qtversion(path, qc_qtselect))
+				return path;
+			if (at > 0)
+				qtdir += at + 1;
+			else
+				break;
 		}
 	}
 
