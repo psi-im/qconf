@@ -583,13 +583,13 @@ static int qc_removedir(const char *path)
 
 #ifdef QC_OS_WIN
 	str = strdup("deltree /y ");
-	str = append_free(str, qconftemp_path);
+	str = append_free(str, path);
 	ret = run_silent_all(str);
 	free(str);
 	if(ret != 0)
 	{
 		str = strdup("rmdir /s /q ");
-		str = append_free(str, qconftemp_path);
+		str = append_free(str, path);
 		ret = run_silent_all(str);
 		free(str);
 	}
