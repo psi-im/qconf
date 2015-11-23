@@ -434,6 +434,18 @@ public:
 		mainopts.clear();
 		mainopts += ConfOpt("qtdir", "path", "EX_QTDIR", "Directory where Qt is installed.");
 
+		if(usePrefix) {
+			mainopts += ConfOpt("prefix", "path", "PREFIX", "Base path for build/install.  No default.");
+			if(useBindir)
+				mainopts += ConfOpt("bindir", "path", "BINDIR", "Directory for binaries.  Default: PREFIX/bin");
+			if(useIncdir)
+				mainopts += ConfOpt("includedir", "path", "INCDIR", "Directory for headers.  Default: PREFIX/include");
+			if(useLibdir)
+				mainopts += ConfOpt("libdir", "path", "LIBDIR", "Directory for libraries.  Default: PREFIX/lib");
+			if(useDatadir)
+				mainopts += ConfOpt("datadir", "path", "DATADIR", "Directory for data.  Default: PREFIX/share");
+		}
+
 		if(libmode)
 			mainopts += ConfOpt("static", QString(), "QC_STATIC", "Create a static library instead of shared.");
 

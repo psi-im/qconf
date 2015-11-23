@@ -36,6 +36,12 @@ static char *ex_qtdir = NULL;
 static char *qc_qtselect = NULL;
 static char *qtsearchtext="4 or 5";
 
+static char *prefix = NULL;
+static char *bindir = NULL;
+static char *includedir = NULL;
+static char *libdir = NULL;
+static char *datadir = NULL;
+
 enum ArgType
 {
 	ArgValue,
@@ -915,6 +921,26 @@ int main(int argc, char **argv)
 			qc_verbose = 1;
 			set_envvar("QC_VERBOSE", "Y");
 		}
+		else if(strcmp(var, "prefix") == 0)
+		{
+			prefix = strdup(val);
+		}
+		else if(strcmp(var, "bindir") == 0)
+		{
+			bindir = strdup(val);
+		}
+		else if(strcmp(var, "includedir") == 0)
+		{
+			includedir = strdup(val);
+		}
+		else if(strcmp(var, "datadir") == 0)
+		{
+			datadir = strdup(val);
+		}
+		else if(strcmp(var, "libdir") == 0)
+		{
+			libdir = strdup(val);
+		}
 		else if(strcmp(var, "qtselect") == 0)
 		{
 			if (val && strlen(val))
@@ -966,9 +992,55 @@ int main(int argc, char **argv)
 
 		if(qc_qtselect)
 			free(qc_qtselect);
+
+		if(prefix)
+			free(prefix);
+
+		if(bindir)
+			free(bindir);
+
+		if(includedir)
+			free(includedir);
+
+		if(libdir)
+			free(libdir);
+
+		if(datadir)
+			free(datadir);
 		
 		return 1;
 	}
+
+	if(prefix)
+	{
+		set_envvar("PREFIX", prefix);
+		if(!libdir)
+			libdir = append_str(prefix, "/lib");
+
+		if(!bindir)
+			bindir = append_str(prefix, "/bin");
+
+		if(!includedir)
+			includedir = append_str(prefix, "/include");
+
+		if(!datadir)
+			datadir = append_str(prefix, "/share");
+	}
+
+	if(libdir)
+		set_envvar("LIBDIR", libdir);
+
+	if(bindir)
+		set_envvar("BINDIR", bindir);
+
+	if(includedir)
+		set_envvar("INCLUDEDIR", includedir);
+
+	if(datadir)
+		set_envvar("DATADIR", datadir);
+
+	if(libdir)
+		set_envvar("LIBDIR", libdir);
 
 	n = do_conf(q, argv[0]);
 	qcdata_delete(q);
@@ -977,6 +1049,22 @@ int main(int argc, char **argv)
 
 	if(qc_qtselect)
 		free(qc_qtselect);
+
+	if(prefix)
+		free(prefix);
+
+	if(bindir)
+		free(bindir);
+
+	if(includedir)
+		free(includedir);
+
+	if(libdir)
+		free(libdir);
+
+	if(datadir)
+		free(datadir);
+
 	if(n)
 		return 0;
 	else
