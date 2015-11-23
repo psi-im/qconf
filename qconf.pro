@@ -21,7 +21,7 @@ RESOURCES += src/qconf.qrc
 
 # install
 # we check for empty BINDIR here in case we're debugging with configexe on unix
-!isEmpty(BINDIR) {
+!isEmpty(BINDIR):!isEmpty(DATADIR) {
 	#CONFIG += no_fixpath
 	target.path = $$BINDIR
 	INSTALLS += target
