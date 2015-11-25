@@ -1452,8 +1452,15 @@ int main(int argc, char **argv)
 
 	QDir confdir(confdirpath);
 	if(!confdir.exists()) {
-		printf("qconf: %s does not exist.\n", qPrintable(confdir.path()));
-		return 1;
+#ifdef Q_OS_WIN
+		confdir = QDir(appdir + "/../share/qconf/conf");
+		if(!confdir.exists()) {
+#endif
+			printf("qconf: %s does not exist.\n", qPrintable(confdir.absolutePath()));
+			return 1;
+#ifdef Q_OS_WIN
+		}
+#endif
 	}
 
 	QFile f;
