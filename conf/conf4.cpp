@@ -998,19 +998,19 @@ int main(int argc, char ** argv)
 		str += "# qconf\n\n";
 
 		QString var;
-		var = qc_getenv("PREFIX");
+		var = qc_normalize_path(qc_getenv("PREFIX"));
 		if(!var.isEmpty())
 			str += QString("PREFIX = %1\n").arg(var);
-		var = qc_getenv("BINDIR");
+		var = qc_normalize_path(qc_getenv("BINDIR"));
 		if(!var.isEmpty())
 			str += QString("BINDIR = %1\n").arg(var);
-		var = qc_getenv("INCDIR");
+		var = qc_normalize_path(qc_getenv("INCDIR"));
 		if(!var.isEmpty())
 			str += QString("INCDIR = %1\n").arg(var);
-		var = qc_getenv("LIBDIR");
+		var = qc_normalize_path(qc_getenv("LIBDIR"));
 		if(!var.isEmpty())
 			str += QString("LIBDIR = %1\n").arg(var);
-		var = qc_getenv("DATADIR");
+		var = qc_normalize_path(qc_getenv("DATADIR"));
 		if(!var.isEmpty())
 			str += QString("DATADIR = %1\n").arg(var);
 		str += '\n';
