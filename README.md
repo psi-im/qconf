@@ -23,8 +23,8 @@ First, create a project.qc file. It is in an XML format:
 
 ```xml
 <qconf>
-  <name>MyProject</name>         <-- a friendly string
-  <profile>project.pro</profile> <-- your qmake profile
+  <name>MyProject</name>         <!-- a friendly string  -->
+  <profile>project.pro</profile> <!-- your qmake profile -->
 </qconf>
 ```
 
@@ -34,14 +34,14 @@ Then, run qconf on your file:
 qconf project.qc
 ```
 
-Assuming all goes well, this will output `configure` and `configure.exe` programs. Simply copy these files into your application package.  Make sure to `include(conf.pri)` in your project.pro file.
+Assuming all goes well, this will output `configure` and `configure.exe` programs. Simply copy these files into your application package. Make sure to `include(conf.pri)` in your project.pro file.
 
 Tip: If qconf is launched with no arguments, it will use the first .qc file it can find in the current directory. If there is no .qc file, then it will look for a .pro file, and create a .qc for you based on it.
 
 The Configure Programs
 ----------------------
 
-Once the configure programs have been created, they are immediately usable. The programs simply perform the following tasks:
+Once the configure programs have been created, they are immediately usable. The programs perform the following tasks:
 
 1. Check for a proper Qt build environment. This is done by compiling the `conf` program, which ensures that the Qt library, qmake, and necessary compiler tools are present and functioning.
 
@@ -59,10 +59,10 @@ Q & A
 -----
 
 Q: How do I specify dependencies?  
-A: List them in your .qc file using the <dep> element. Follow sampledeps.qc for a hint.
+A: List them in your .qc file using the `<dep>` element. Follow sampledeps.qc for a hint.
 
 Q: My dependency is not supported!  
-A: You will need to make it. Look in the 'modules' folder to see how it is done. If you find that you need to make a lot of these, perhaps you should consider GNU autotools or CMake.
+A: You will need to make it. Look in the `modules` folder to see how it is done. If you find that you need to make a lot of these, perhaps you should consider GNU autotools or CMake.
 
 Q: How does qconf find modules?  
 A: Modules are found in the `modules` subdirectory within the configured libdir (default is `/usr/local/share/qconf`). Additional directories can be specified using the `<moddir>` element. For instance:
