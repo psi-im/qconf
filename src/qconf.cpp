@@ -26,7 +26,7 @@
 
 #include "stringhelp.h"
 
-#define VERSION "1.5"
+#define VERSION "2.0"
 
 #define CONF_USAGE_SPACE 4
 #define CONF_WRAP        78
