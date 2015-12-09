@@ -1,7 +1,7 @@
 QConf v2.0
 ==========
 
-Authors: Justin Karneges <justin@affinix.com>, Sergey Ilinykh rion4ik@gmail.com, Ivan Romanov <drizt@land.ru>  
+Authors: Justin Karneges <justin@affinix.com>, Sergey Ilinykh <rion4ik@gmail.com>, Ivan Romanov <drizt@land.ru>  
 Mailing List: Delta Project <delta@lists.affinix.com>  
 Website: http://delta.affinix.com/qconf/
 
