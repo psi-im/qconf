@@ -7,7 +7,18 @@ DESTDIR  = $$PWD
 HEADERS += src/stringhelp.h
 SOURCES += src/stringhelp.cpp src/qconf.cpp
 
-include($$OUT_PWD/conf.pri)
+exists($$OUT_PWD/conf.pri) {
+	include($$OUT_PWD/conf.pri)
+}
+
+isEmpty(CXXFLAGS) {
+	CXXFLAGS=$$(CXXFLAGS)
+}
+
+!isEmpty(CXXFLAGS) {
+	QMAKE_CXXFLAGS_DEBUG = $$CXXFLAGS
+	QMAKE_CXXFLAGS_RELEASE = $$CXXFLAGS
+}
 
 !isEmpty(DATADIR) {
 	contains($$list($$[QT_VERSION]), 4.0.*|4.1.*) {
