@@ -765,7 +765,7 @@ static int do_conf(qcdata_t *q, const char *argv0)
 			try_print_var(q->args[n].envvar, q->args[n].val);
 	}
 
-	printf("Verifying Qt 4+ build environment ... ");
+	printf("Verifying Qt build environment ... ");
 	fflush(stdout);
 
 	if(qc_verbose)
