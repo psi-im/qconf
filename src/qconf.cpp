@@ -166,11 +166,11 @@ static QByteArray get_configexe_stub()
 }
 
 const char *qt4_info_str =
-	"Be sure you have a proper Qt 4.0 build environment set up.  This means not just Qt, "
+	"Be sure you have a proper Qt 4.0+ build environment set up.  This means not just Qt, "
 	"but also a C++ compiler, a make tool, and any other packages necessary "
 	"for compiling C++ programs.\n"
 	"\n"
-	"If you are certain everything is installed, then it could be that Qt 4 is not being "
+	"If you are certain everything is installed, then it could be that Qt is not being "
 	"recognized or that a different version of Qt is being detected by mistake (for example, "
 	"this could happen if \\$QTDIR is pointing to a Qt 3 installation).  At least one of "
 	"the following conditions must be satisfied:\n"
@@ -185,11 +185,11 @@ const char *qt4_info_str =
 	"\n";
 
 const char *qt4_info_str_win =
-	"Be sure you have a proper Qt 4.0 build environment set up.  This means not just Qt, "
+	"Be sure you have a proper Qt 4.0+ build environment set up.  This means not just Qt, "
 	"but also a C++ compiler, a make tool, and any other packages necessary "
 	"for compiling C++ programs.\n"
 	"\n"
-	"If you are certain everything is installed, then it could be that Qt 4 is not being "
+	"If you are certain everything is installed, then it could be that Qt is not being "
 	"recognized or that a different version of Qt is being detected by mistake (for example, "
 	"this could happen if %QTDIR% is pointing to a Qt 3 installation).  At least one of "
 	"the following conditions must be satisfied:\n"
@@ -400,7 +400,7 @@ public:
 				str += "qm=$PWD/byoq/qt/bin/qmake\n\n";
 			}
 
-			str += "printf \"Verifying Qt 4 build environment ... \"\n\n";
+			str += "printf \"Verifying Qt build environment ... \"\n\n";
 			if(!byoq)
 				str += genQt4Checks();
 		}
