@@ -570,7 +570,7 @@ private:
 
 		QList<ConfUsageOpt> list = optsToUsage(mainopts);
 		list += ConfUsageOpt("verbose",  "",   "Show extra configure output.");
-		list += ConfUsageOpt("qtselect",  "N",   "Select major Qt verion (4 or 5).");
+		list += ConfUsageOpt("qtselect",  "N",   "Select major Qt version (4 or 5).");
 		list += ConfUsageOpt("help",   "",     "This help text.");
 		str += genUsageSection("Main options:", list);
 
@@ -596,7 +596,7 @@ private:
 
 		QList<ConfUsageOpt> list = optsToUsage(mainopts);
 		list += ConfUsageOpt("verbose",  "",   "Show extra configure output.");
-		list += ConfUsageOpt("qtselect",  "N",   "Select major Qt verion (4 or 5).");
+		list += ConfUsageOpt("qtselect",  "N",   "Select major Qt version (4 or 5).");
 		list += ConfUsageOpt("help",   "",     "This help text.");
 		str += genUsageSection("Main options:", list);
 
