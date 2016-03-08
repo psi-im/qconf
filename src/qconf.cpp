@@ -858,7 +858,7 @@ private:
 		"	if [ -z \"$qm\" ]; then\n"
 		"		qtchooser=$($WHICH qtchooser 2>/dev/null)\n"
 		"		if [ ! -z \"$qtchooser\" ]; then\n"
-		"			if [ ! -z \"$QC_QTSELECT\"]; then\n"
+		"			if [ ! -z \"$QC_QTSELECT\" ]; then\n"
 		"				versions=\"$QC_QTSELECT\"\n"
 		"			else\n"
 		"				cmd=\"$qtchooser --list-versions\"\n"
