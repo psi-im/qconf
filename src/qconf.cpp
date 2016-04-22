@@ -1533,6 +1533,7 @@ int main(int argc, char **argv)
 	QByteArray confpro = f.readAll();
 	f.close();
 	confpro += "\nDEFINES += HAVE_MODULES\n";
+	confpro += "\ngreaterThan(QT_MAJOR_VERSION, 4):CONFIG += c++11\n";
 
 	printf("Project name: %s\n", qPrintable(conf.name));
 	printf("Profile: %s\n", qPrintable(conf.profile));
