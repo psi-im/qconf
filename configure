@@ -173,7 +173,7 @@ fi
 printf "Verifying Qt build environment ... "
 
 if [ -z "$QC_QTSELECT" ]; then
-	QC_QTSELECT="$QT_SELECT"
+	QC_QTSELECT="${QT_SELECT/qt/}"
 fi
 
 if [ ! -z "$QC_QTSELECT" ]; then
