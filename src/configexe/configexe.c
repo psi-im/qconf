@@ -13,6 +13,7 @@ preserved.
 #include <sys/stat.h>
 #include <errno.h>
 //#include <unistd.h>
+#include <limits.h>
 #include "embed.h"
 
 #if defined(WIN32) || defined(_WIN32)
@@ -410,6 +411,23 @@ int check_qtversion(char *path, char *version)
 	return res;
 }
 
+static char* parse_qtselect(char *src)
+{
+	unsigned long int ver;
+	if (src) {
+		if (src[0] == 'q' && src[1] == 't')
+			src += 2;
+
+		ver = strtoul(src, NULL, 10);
+		if (ver > 0 && ver < ULONG_MAX) {
+			qc_qtselect = strdup(src);
+			qtsearchtext = qc_qtselect;
+			return qc_qtselect;
+		}
+	}
+	return NULL;
+}
+
 static char *find_qmake()
 {
 	char *qtdir;
@@ -417,11 +435,7 @@ static char *find_qmake()
 	char try_syspath = 1;
 
 	if (!qc_qtselect)
-	{
-		qc_qtselect = strdup(get_envvar("QT_SELECT"));
-		if (qc_qtselect)
-			qtsearchtext = qc_qtselect;
-	}
+		parse_qtselect(get_envvar("QT_SELECT"));
 
 
 	qtdir = ex_qtdir;
@@ -944,10 +958,7 @@ int main(int argc, char **argv)
 		else if(strcmp(var, "qtselect") == 0)
 		{
 			if (val && strlen(val))
-			{
-				qc_qtselect = strdup(val);
-				qtsearchtext = qc_qtselect;
-			}
+				qc_qtselect = parse_qtselect(val);
 		}
 		else
 		{

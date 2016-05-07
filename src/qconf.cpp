@@ -767,7 +767,7 @@ private:
 	{
 		QString str =
 		"if [ -z \"$QC_QTSELECT\" ]; then\n"
-		"	QC_QTSELECT=\"$QT_SELECT\"\n"
+		"	QC_QTSELECT=\"${QT_SELECT/qt/}\"\n"
 		"fi\n"
 		"\n"
 		"if [ ! -z \"$QC_QTSELECT\" ]; then\n"
