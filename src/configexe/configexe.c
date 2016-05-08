@@ -43,6 +43,8 @@ static char *includedir = NULL;
 static char *libdir = NULL;
 static char *datadir = NULL;
 
+static int run_buffer_stdout(const char *command, char *out_buf, size_t buf_size);
+
 enum ArgType
 {
 	ArgValue,
@@ -357,6 +359,9 @@ static char *check_qmake_path(const char *qtdir)
 #else
 	str = append_free(str, "/qmake");
 #endif
+	if (qc_verbose) {
+		printf("Check if \"%s\" exists\n", str);
+	}
 	if(file_exists(str))
 	{
 		return str;
@@ -368,38 +373,62 @@ static char *check_qmake_path(const char *qtdir)
 	}
 }
 
+static int qmake_query(const char *qmake_path, const char *var, char *out_buf, size_t buf_size)
+{
+	char command[PATH_MAX];
+	int cnt = snprintf(command, sizeof(command) - 1, "%s -query %s", qmake_path, var);
+	if (cnt > 0 && cnt < (int)sizeof(command))
+	{
+		command[sizeof(command) - 1] = '\0'; // To be sure line has null-terminator
+		return run_buffer_stdout(command, out_buf, buf_size);
+	}
+	return 0; // fail
+}
+
+static int qmake_query_maj_ver(const char *qmake_path, char *out_buf, size_t buf_size)
+{
+	if (qmake_query(qmake_path, "QT_VERSION", out_buf, buf_size)) {
+		int at = index_of(out_buf, '.');
+		if (at > 0)
+		{
+			out_buf[at] = '\0';
+			return 1;
+		}
+	}
+	return 0;
+}
+
+// modifies contents of spec_path and returns pointer to spec name
+char *extract_spec_name(char *spec_path)
+{
+	char *end = spec_path;
+	while (!iscntrl(*end)) {
+		if (*end == '/') {
+			if (iscntrl(*(end+1))) { // next is end of line
+				break;
+			} else {
+				spec_path = end + 1;
+				end = spec_path + 1;
+			}
+		} else
+			end++;
+	}
+	*end = 0;
+	return spec_path;
+}
+
 int check_qtversion(char *path, char *version)
 {
-	FILE *file;
 	int res = 0;
 
 	if (version)
 	{
-		char command[PATH_MAX];
-		int cnt = snprintf(command, sizeof(command) - 1, "%s -query QT_VERSION", path);
-		if (cnt > 0 && cnt < (int)sizeof(command))
-		{
-			command[sizeof(command) - 1] = '\0'; // To be sure line has null-terminator
-			file = popen(command, "r");
-			if (file)
+		char buf[20]; // version string output always small
+		if (qmake_query_maj_ver(path, buf, sizeof(buf))) {
+			res = !strcmp(version, buf);
+			if (!res && qc_verbose)
 			{
-				char buf[20]; // version string output always small
-				if (fread(buf, 1, sizeof(buf), file) > 0)
-				{
-					buf[sizeof(buf) - 1] = '\0';
-					int at = index_of(buf, '.');
-					if (at > 0)
-					{
-						// Compare major version
-						buf[at] = '\0';
-						res = !strcmp(version, buf);
-						if (!res && qc_verbose)
-						{
-							printf("Warning: %s not for Qt %s\n", path, qtsearchtext);
-						}
-					}
-				}
-				pclose(file);
+				printf("Warning: %s not for Qt %s\n", path, qtsearchtext);
 			}
 		}
 	}
@@ -504,6 +533,28 @@ static char *find_qmake()
 	return NULL;
 }
 
+static int run_buffer_stdout(const char *command, char *out_buf, size_t buf_size)
+{
+	FILE *file;
+
+	file = popen(command, "r");
+	if (file)
+	{
+		size_t bytes_left = buf_size - 1; // 1 for null terminator
+		size_t bytes_read;
+		while (bytes_left && (bytes_read = fread(out_buf, 1, bytes_left, file)) > 0)
+			bytes_left -= bytes_read;
+
+		out_buf[buf_size - bytes_left - 1] = '\0';
+		pclose(file);
+
+		return 1; // ok
+	}
+
+	out_buf[0] = 0; // just in case
+	return 0; // fail
+}
+
 static int run_silent_stdout(const char *cmd)
 {
 	char *str;
@@ -549,6 +600,8 @@ static int run_conflog_all(const char *cmd)
 #else
 	str = append_free(str, " >../conf.log 2>&1");
 #endif
+	if (qc_verbose)
+		printf("Starting \"%s\"\n", str);
 	ret = system(str);
 	free(str);
 
@@ -670,31 +723,50 @@ static int try_make(const char *makecmd, char **maketool)
 
 	str = strdup(makecmd);
 	str = append_free(str, " clean");
-	ret = run_silent_all(str);
+	ret = run_conflog_all(str);
 	free(str);
 	if(ret != 0)
 		return 0;
 
-	if(run_conflog_all(makecmd) != 0)
+	if(run_conflog_all(makecmd) != 0) {
+		if (qc_verbose)
+			printf("\"%s\" failed\n", makecmd);
 		return 0;
+	}
 
 	*maketool = strdup(makecmd);
 	return 1;
 }
 
-static char *maketool_list[] =
+static char *maketool_list_common[] =
 {
-	"make",
 	"mingw32-make",
+	"make",
+	"jom",
 	"nmake",
 	NULL
 };
 
-static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
+static char *maketool_list_mingw[] =
+{
+	"make",
+	"mingw32-make",
+	NULL
+};
+
+static char *maketool_list_vs[] =
+{
+	"jom",
+	"nmake",
+	NULL
+};
+
+static int do_conf_create(qcdata_t *q, const char *qmake_path, const char *spec, char **maketool)
 {
 	char *str;
 	int n;
 	int at;
+	char **maketool_list;
 
 	if(!qc_ensuredir(qconftemp_path))
 		return 0;
@@ -717,6 +789,13 @@ static int do_conf_create(qcdata_t *q, const char *qmake_path, char **maketool)
 	free(str);
 
 	at = -1;
+	if (strstr(spec, "win32-msvc")) {
+		maketool_list = maketool_list_vs;
+	} else if(strstr(spec, "win32-g++")) {
+		maketool_list = maketool_list_mingw;
+	} else {
+		maketool_list = maketool_list_common;
+	}
 	for(n = 0; maketool_list[n]; ++n)
 	{
 		if(qc_verbose)
@@ -767,6 +846,8 @@ static int do_conf(qcdata_t *q, const char *argv0)
 {
 	char *qmake_path;
 	char *maketool;
+	int qt_maj_version = 0;
+	char *specs_name = NULL;
 	int n;
 	int ret;
 
@@ -801,13 +882,75 @@ static int do_conf(qcdata_t *q, const char *argv0)
 	if(qc_verbose)
 		printf("qmake found in %s\n", qmake_path);
 
+	// figure out what version it is.
+	{
+		char buf[20]; // version string output always small
+		if (qmake_query_maj_ver(qmake_path, buf, sizeof(buf))) {
+			qt_maj_version = strtoul(buf, NULL, 10);
+			if (qt_maj_version == ULONG_MAX)
+				qt_maj_version = 0;
+		}
+		if (qt_maj_version == 0) {
+			if(qc_verbose) {
+				printf(" -> fail\n");
+				printf("Qt major version is not parsable\n");
+			} else
+				printf("fail\n");
+			free(qmake_path);
+			return 0;
+		}
+	}
+
+	// find specc name
+	{
+		char *spec = get_envvar("QMAKESPEC");
+		if (!spec) {
+			// try to find default spec
+			if (qt_maj_version > 4) {
+				char buf[32];
+				if (qmake_query(qmake_path, "QMAKE_XSPEC", buf, sizeof(buf))) // or QMAKE_SPEC ?
+					specs_name = strdup(buf);
+				// it's possible to compute full path like QT_HOST_DATA/QMAKE_XSPEC
+			} else {
+				char *qmake_conf, buf[1024];
+				FILE *fp;
+				qmake_query(qmake_path, "QMAKE_MKSPECS", buf, sizeof(buf));
+				qmake_conf = append_free(strdup(buf), "/default/qmake.conf");
+				fp = fopen(qmake_conf, "r");
+				free(qmake_conf);
+				if (fp) {
+					size_t br;
+					if ((br = fread(buf, 1, sizeof(buf) - 1, fp)) > 0) {
+						char *str, *end;
+						buf[br] = 0;
+						str = strstr(buf, "QMAKESPEC_ORIGINAL=");
+						if (str) {
+							str = extract_spec_name(str);
+							if (str) {
+								specs_name = strdup(str);
+							}
+						}
+					}
+					fclose(fp);
+				}
+			}
+		} else {
+			char *s = strdup(spec);
+			specs_name = extract_spec_name(s);
+			if (specs_name) {
+				specs_name = strdup(specs_name);
+			}
+			free(s);
+		}
+	}
+
 	// TODO: in verbose mode, print out default makespec and what we're
 	//   overriding the makespec to (if any).  since at this time we don't
 	//   ever override the makespec on windows, we don't need this yet.
 
 	cleanup_qconftemp();
 	maketool = NULL;
-	if(!do_conf_create(q, qmake_path, &maketool))
+	if(!do_conf_create(q, qmake_path, specs_name, &maketool))
 	{
 		cleanup_qconftemp();
 		if(qc_verbose)

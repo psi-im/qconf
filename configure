@@ -515,6 +515,12 @@ preserved.
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <limits.h>
+#ifndef PATH_MAX
+# ifdef Q_OS_WIN
+#  define PATH_MAX 260
+# endif
+#endif
 
 class MocTestObject : public QObject
 {
