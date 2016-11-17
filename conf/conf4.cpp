@@ -191,7 +191,9 @@ QStringList qc_splitflags(const QString &flags)
 	bool escaped = false;
 	QChar quote, backslash = QLatin1Char('\\');
 	QString buf;
+#ifdef PATH_MAX
 	buf.reserve(PATH_MAX);
+#endif
 	for (int i=0; i < flags.length(); i++) {
 		if (searchStart && flags[i].isSpace()) {
 			continue;
