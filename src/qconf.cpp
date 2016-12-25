@@ -1452,9 +1452,12 @@ int main(int argc, char **argv)
 			printf("qconf: error reading %s\n", qPrintable(f.fileName()));
 			return 1;
 		}
+
 		QDomDocument doc;
-		if(!doc.setContent(&f)) {
-			printf("qconf: error parsing %s\n", qPrintable(f.fileName()));
+		int errLine;
+		QString err;
+		if(!doc.setContent(&f, &err, &errLine)) {
+			printf("qconf: error parsing %s at line %d: %s\n", qPrintable(f.fileName()), errLine, qPrintable(err));
 			return 1;
 		}
 		f.close();
