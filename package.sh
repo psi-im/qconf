@@ -9,7 +9,7 @@ fi
 VERSION=$1
 
 mkdir -p build/qconf-$VERSION
-cp -a AUTHORS COPYING README.md TODO conf configure configure.exe examples modules qconf.* src build/qconf-$VERSION
+cp -a AUTHORS COPYING README.md TODO conf configure configure.exe examples modules qconf.pro  qconf.qc src build/qconf-$VERSION
 cd build
 tar Jcvf qconf-$VERSION.tar.xz qconf-$VERSION
 
