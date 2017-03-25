@@ -150,7 +150,7 @@ while [ $# -gt 0 ]; do
 			shift
 			;;
 		--help) show_usage; exit ;;
-		*) show_usage; exit 1;;
+		*) echo "configure: WARNING: unrecognized options: $1" >&2; shift; ;;
 	esac
 done
 

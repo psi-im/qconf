@@ -747,7 +747,7 @@ private:
 		"			shift\n"
 		"			;;\n"
 		"		--help) show_usage; exit ;;\n"
-		"		*) show_usage; exit 1;;\n"
+		"		*) echo \"configure: WARNING: unrecognized options: $1\" >&2; shift; ;;\n"
 		"	esac\n"
 		"done\n\n";
 
