@@ -431,6 +431,10 @@ public:
 			conf->addLib(libs);
 		//if(!other.isEmpty())
 		//	conf->addExtra(QString("QMAKE_CFLAGS += %1\n").arg(other));
+
+		if(!required)
+			conf->addDefine("HAVE_PKG_" + qc_escapeArg(pkgname).toUpper());
+
 		return true;
 	}
 };
