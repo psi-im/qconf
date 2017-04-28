@@ -1375,6 +1375,40 @@ Conf xmlToConf(const QDomElement &e)
 	return conf;
 }
 
+/**
+ * @brief loadConfFromPro Generates the .qc file from a .pro file and loads the configuration from it
+ * @param conf Pointer to the configuration structure to be filled
+ * @param proFile Path of the .pro file
+ * @param qcFile Pointer to the string to be filled with the path of the new .qc file
+ * @return Success or failure
+ */
+bool loadConfFromPro(Conf *conf, QString proFile, QString *qcFile){
+	QFileInfo fi(proFile);
+	conf->name = fi.baseName();
+	conf->profile = fi.fileName();
+
+	// save to .qc
+	*qcFile = conf->name + ".qc";
+	QFile f(*qcFile);
+	if(!f.open(QFile::WriteOnly | QFile::Truncate))
+		return false;
+
+	QDomDocument doc;
+	QDomElement e = doc.createElement("qconf");
+	QDomElement i;
+	i = doc.createElement("name");
+	i.appendChild(doc.createTextNode(conf->name));
+	e.appendChild(i);
+	i = doc.createElement("profile");
+	i.appendChild(doc.createTextNode(conf->profile));
+	e.appendChild(i);
+	doc.appendChild(e);
+	QByteArray cs = doc.toString().toUtf8();
+	f.write(cs);
+	f.close();
+	return true;
+}
+
 int main(int argc, char **argv)
 {
 	QCoreApplication app(argc, argv);
@@ -1393,30 +1427,12 @@ int main(int argc, char **argv)
 				printf("qconf: no .qc or .pro file found.\n");
 				return 1;
 			}
-			QFileInfo fi(cur.filePath(list[0]));
-			conf.name = fi.baseName();
-			conf.profile = fi.fileName();
 
-			// save to .qc
-			fname = conf.name + ".qc";
-			QFile f(fname);
-			if(!f.open(QFile::WriteOnly | QFile::Truncate)) {
+			if( ! loadConfFromPro(&conf, cur.filePath(list[0]), &fname)){
 				printf("qconf: unable to write %s\n", qPrintable(fname));
 				return 1;
 			}
-			QDomDocument doc;
-			QDomElement e = doc.createElement("qconf");
-			QDomElement i;
-			i = doc.createElement("name");
-			i.appendChild(doc.createTextNode(conf.name));
-			e.appendChild(i);
-			i = doc.createElement("profile");
-			i.appendChild(doc.createTextNode(conf.profile));
-			e.appendChild(i);
-			doc.appendChild(e);
-			QByteArray cs = doc.toString().toUtf8();
-			f.write(cs);
-			f.close();
+
 			skipLoad = true;
 		}
 		else {
@@ -1447,14 +1463,20 @@ int main(int argc, char **argv)
 	}
 
 	if(!skipLoad) {
+		if(fname.endsWith(".pro"))
+			loadConfFromPro(&conf, fname, &fname);
+
 		QFile f(fname);
 		if(!f.open(QFile::ReadOnly)) {
 			printf("qconf: error reading %s\n", qPrintable(f.fileName()));
 			return 1;
 		}
+
 		QDomDocument doc;
-		if(!doc.setContent(&f)) {
-			printf("qconf: error parsing %s\n", qPrintable(f.fileName()));
+		int errLine;
+		QString err;
+		if(!doc.setContent(&f, &err, &errLine)) {
+			printf("qconf: error parsing %s at line %d: %s\n", qPrintable(f.fileName()), errLine, qPrintable(err));
 			return 1;
 		}
 		f.close();
