@@ -1,4 +1,4 @@
-QConf v2.0
+QConf v2.3
 ==========
 
 Authors: Justin Karneges <justin@affinix.com>, Sergey Ilinykh <rion4ik@gmail.com>, Ivan Romanov <drizt@land.ru>  
