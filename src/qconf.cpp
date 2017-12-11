@@ -785,7 +785,7 @@ private:
 		"		fi\n"
 		"		vout=`/bin/sh -c \"$cmd\" 2>&1`\n"
 		"		case \"${vout}\" in\n"
-		"			?.?.?)\n"
+		"			*.*.*)\n"
 		"				vmaj=\"${vout%%.*}\"\n"
 		"				if [ ! -z \"$QC_QTSELECT\" ]; then\n"
 		"					if [ \"$vmaj\" = \"$QC_QTSELECT\" ]; then\n"
