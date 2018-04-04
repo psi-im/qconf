@@ -7,6 +7,8 @@ DESTDIR  = $$PWD
 HEADERS += src/stringhelp.h
 SOURCES += src/stringhelp.cpp src/qconf.cpp
 
+OTHER_FILES += conf/*
+
 exists($$OUT_PWD/conf.pri) {
 	include($$OUT_PWD/conf.pri)
 }

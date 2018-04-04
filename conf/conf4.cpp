@@ -789,33 +789,45 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	QString inc, lib;
 	QString s;
 
-	s = getenv(incvar);
+	s = getenv(incvar).trimmed();
 	if(!s.isEmpty()) {
-		if(!checkHeader(s, incname))
+		if(!checkHeader(s, incname)) {
+			if(debug_enabled)
+				printf("%s is not found in \"%s\"\n", qPrintable(incname), qPrintable(s));
 			return false;
+		}
 		inc = s;
 	}
 	else {
-		if(!findHeader(incname, QStringList(), &s))
+		if(!findHeader(incname, QStringList(), &s)) {
+			if(debug_enabled)
+				printf("%s is not found in anywhere\n", qPrintable(incname));
 			return false;
+		}
 		inc = s;
 	}
 
-	s = getenv(libvar);
+	s = getenv(libvar).trimmed();
 	if(!s.isEmpty()) {
-		if(!checkLibrary(s, libname))
+		if(!checkLibrary(s, libname)) {
+			if(debug_enabled)
+				printf("%s is not found in \"%s\"\n", qPrintable(libname), qPrintable(s));
 			return false;
+		}
 		lib = s;
 	}
 	else {
-		if(!findLibrary(libname, &s))
+		if(!findLibrary(libname, &s)) {
+			if(debug_enabled)
+				printf("%s is not found in anywhere\n", qPrintable(libname));
 			return false;
+		}
 		lib = s;
 	}
 
 	QString lib_out;
 	if(!lib.isEmpty())
-		lib_out += QString("-L") + s;
+		lib_out += QString("-L") + s + " ";
 	lib_out += QString("-l") + libname;
 
 	*incpath = inc;
