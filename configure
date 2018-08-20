@@ -1306,7 +1306,7 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	else {
 		if(!findHeader(incname, QStringList(), &s)) {
 			if(debug_enabled)
-				printf("%s is not found in anywhere\\n", qPrintable(incname));
+				printf("%s is not found anywhere\\n", qPrintable(incname));
 			return false;
 		}
 		inc = s;
@@ -1324,7 +1324,7 @@ bool Conf::findSimpleLibrary(const QString &incvar, const QString &libvar, const
 	else {
 		if(!findLibrary(libname, &s)) {
 			if(debug_enabled)
-				printf("%s is not found in anywhere\\n", qPrintable(libname));
+				printf("%s is not found anywhere\\n", qPrintable(libname));
 			return false;
 		}
 		lib = s;
