@@ -408,13 +408,13 @@ public:
     VersionMode mode;
     QString req_ver;
 
-    qc_internal_pkgconfig(Conf *c, const QString &_name, const QString &_desc, VersionMode _mode, const QString &_req_ver) : ConfObj(c)
-    {
-        pkgname = _name;
-        desc = _desc;
-        mode = _mode;
-        req_ver = _req_ver;
-    }
+    qc_internal_pkgconfig(Conf *c, const QString &_name, const QString &_desc, VersionMode _mode, const QString &_req_ver)
+        : ConfObj(c)
+        , pkgname(_name)
+        , desc(_desc)
+        , mode(_mode)
+        , req_ver(_req_ver)
+    {}
 
     QString name() const { return desc; }
     QString shortname() const { return pkgname; }

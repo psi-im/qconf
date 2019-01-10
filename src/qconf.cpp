@@ -205,11 +205,10 @@ class ConfUsageOpt
 {
 public:
     ConfUsageOpt(const QString &_name="", const QString &_arg="", const QString &_desc="")
-    {
-        name = _name;
-        arg = _arg;
-        desc = _desc;
-    }
+        : name(_name)
+        , arg(_arg)
+        , desc(_desc)
+    {}
 
     QString generateFirst() const
     {
@@ -246,12 +245,11 @@ class ConfOpt
 {
 public:
     ConfOpt(const QString &_name="", const QString &_arg="", const QString &_var="", const QString &_desc="")
-    {
-        name = _name;
-        arg = _arg;
-        var = _var;
-        desc = _desc;
-    }
+        : name(_name)
+        , arg(_arg)
+        , var(_var)
+        , desc(_desc)
+    {}
 
     QString name, arg, var, desc;
 };
