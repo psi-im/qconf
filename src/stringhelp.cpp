@@ -22,67 +22,67 @@
 
 static QString getNext(QString *str)
 {
-	if(str->isEmpty())
-		return QString();
+    if(str->isEmpty())
+        return QString();
 
-	// are we in space?
-	int n = 0;
-	if(str->at(n).isSpace())
-	{
-		// get out of it
-		while(n < (int)str->length() && str->at(n).isSpace())
-			++n;
-		if(n == (int)str->length())
-			return QString();
-	}
-	// find end or next space
-	while(n < (int)str->length() && !str->at(n).isSpace())
-		++n;
-	QString result = str->mid(0, n);
-	*str = str->mid(n);
-	return result;
+    // are we in space?
+    int n = 0;
+    if(str->at(n).isSpace())
+    {
+        // get out of it
+        while(n < (int)str->length() && str->at(n).isSpace())
+            ++n;
+        if(n == (int)str->length())
+            return QString();
+    }
+    // find end or next space
+    while(n < (int)str->length() && !str->at(n).isSpace())
+        ++n;
+    QString result = str->mid(0, n);
+    *str = str->mid(n);
+    return result;
 }
 
 // wraps a string against a fixed width
 QStringList wrapString(const QString &str, int wid)
 {
-	QStringList lines;
-	QString cur;
-	QString tmp = str;
-	bool firstword = true;
-	//printf("parsing: [%s]\n", qPrintable(tmp));
-	while(1)
-	{
-		QString word = getNext(&tmp);
-		if(word.isNull())
-		{
-			lines += cur;
-			break;
-		}
-		//printf("word:[%s]\n", qPrintable(word));
-		if(!cur.isEmpty())
-		{
-			if((int)cur.length() + (int)word.length() > wid)
-			{
-				lines += cur;
-				cur = "";
-			}
-		}
-		if(cur.isEmpty() && !firstword)
-		{
-			// trim the whitespace in front
-			for(int n = 0; n < (int)word.length(); ++n)
-			{
-				if(!word.at(n).isSpace())
-				{
-					if(n > 0)
-						word = word.mid(n);
-					break;
-				}
-			}
-		}
-		cur += word;
-		firstword = false;
-	}
-	return lines;
+    QStringList lines;
+    QString cur;
+    QString tmp = str;
+    bool firstword = true;
+    //printf("parsing: [%s]\n", qPrintable(tmp));
+    while(1)
+    {
+        QString word = getNext(&tmp);
+        if(word.isNull())
+        {
+            lines += cur;
+            break;
+        }
+        //printf("word:[%s]\n", qPrintable(word));
+        if(!cur.isEmpty())
+        {
+            if((int)cur.length() + (int)word.length() > wid)
+            {
+                lines += cur;
+                cur = "";
+            }
+        }
+        if(cur.isEmpty() && !firstword)
+        {
+            // trim the whitespace in front
+            for(int n = 0; n < (int)word.length(); ++n)
+            {
+                if(!word.at(n).isSpace())
+                {
+                    if(n > 0)
+                        word = word.mid(n);
+                    break;
+                }
+            }
+        }
+        cur += word;
+        firstword = false;
+    }
+    return lines;
 }
