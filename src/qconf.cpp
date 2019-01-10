@@ -525,7 +525,7 @@ private:
         return str;
     }
 
-    int getUsageIndent(const QList<ConfUsageOpt> list) const
+    int getUsageIndent(const QList<ConfUsageOpt> &list) const
     {
         int largest = 0;
         for(QList<ConfUsageOpt>::ConstIterator it = list.begin(); it != list.end(); ++it) {
