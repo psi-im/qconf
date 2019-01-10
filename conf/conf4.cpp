@@ -299,7 +299,7 @@ QString qc_normalize_path(const QString &str)
 	path = qc_trim_char(path, QLatin1Char('"'));
 	path = qc_trim_char(path, QLatin1Char('\''));
 
-	// It's OK to use unix style'/' pathes on windows Qt handles this without any problems.
+	// It's OK to use unix style'/' paths on windows Qt handles this without any problems.
 	// Using Windows-style '\\' can leads strange compilation error with MSYS which uses
 	// unix style.
 	QLatin1Char nativeSep('/');
