@@ -1250,6 +1250,7 @@ class Dep
 public:
 	Dep()
 	{
+		pkgvermode = VersionMode::VersionAny;
 		required = false;
 		disabled = false;
 		pkgconfig = false;

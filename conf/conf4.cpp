@@ -451,6 +451,7 @@ Conf::Conf()
 	//vars.insert("QMAKE_CC", CC);
 
 	debug_enabled = false;
+	first_debug = true;
 }
 
 Conf::~Conf()
