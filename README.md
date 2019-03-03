@@ -1,12 +1,15 @@
 QConf v2.4
 ==========
 
-Authors: Justin Karneges <justin@affinix.com>, Sergey Ilinykh <rion4ik@gmail.com>, Ivan Romanov <drizt@land.ru>  
-
 QConf allows you to have a nice configure script for your qmake-based project. It is intended for developers who don't need (or want) to use the more complex GNU autotools. QConf also generates a configure.exe program for use on Windows.
 
-Install
--------
+Developers
+----------
+
+See [AUTHORS](https://github.com/psi-plus/qconf/blob/master/AUTHORS) file.
+
+Installation
+------------
 
 ```sh
 ./configure
