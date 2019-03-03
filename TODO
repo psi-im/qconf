@@ -6,14 +6,6 @@ QConf can be considered complete.  There are some todo items in this file,
 but they are not vital.  I've added some rationale text for each one to
 explain why.
 
-- cross-compile?  (set host / target arches)
-
-  I haven't needed to cross-compile yet, so I haven't looked into this.
-  Probably one can do it anyway by setting a bunch of environment variables,
-  like CC, QMAKESPEC, etc.  Maybe when we start seeing active Qt4/Embedded
-  usage, this can be revisited, but even still it may not need to be
-  explicitly supported.
-
 - turn .qc file into qmake-style format instead of xml?
 
   XML is human-readable and nice for application data interchange, but it
