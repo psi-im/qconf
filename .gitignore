@@ -1,3 +1,8 @@
 qconf
 qconf.exe
 qconf.pro.user*
+Makefile
+conf.log
+conf.pri
+*.o
+qrc_*.cpp
