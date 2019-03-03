@@ -1434,7 +1434,7 @@ int main(int argc, char **argv)
                 return 0;
             }
             else if(cs == "--version") {
-                printf("qconf version: %s by Sergey Ilinykh <rion4ik@gmail.com>\n", VERSION);
+                printf("qconf version: %s by Psi IM Team\n", VERSION);
                 return 0;
             }
             else {
