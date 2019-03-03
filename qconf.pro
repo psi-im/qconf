@@ -2,7 +2,7 @@ QT      -= gui
 QT      += xml
 CONFIG  += console
 CONFIG  -= app_bundle
-DESTDIR  = bin
+DESTDIR  = $$PWD
 
 HEADERS += src/stringhelp.h
 SOURCES += src/stringhelp.cpp src/qconf.cpp
