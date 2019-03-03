@@ -6,3 +6,5 @@ conf.log
 conf.pri
 *.o
 qrc_*.cpp
+.qmake.stash
+
