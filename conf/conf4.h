@@ -18,13 +18,12 @@ enum VersionMode { VersionMin, VersionExact, VersionMax, VersionAny };
 // ConfObj
 //
 // Subclass ConfObj to create a new configuration module.
-class ConfObj
-{
+class ConfObj {
 public:
     Conf *conf;
-    bool required;
-    bool disabled;
-    bool success;
+    bool  required;
+    bool  disabled;
+    bool  success;
 
     ConfObj(Conf *c);
     virtual ~ConfObj();
@@ -53,31 +52,32 @@ public:
 //
 // Interact with this class from your ConfObj to perform detection
 // operations and to output configuration parameters.
-class Conf
-{
+class Conf {
 public:
-    bool debug_enabled;
+    bool    debug_enabled;
     QString qmake_path;
     QString qmakespec;
     QString maketool;
 
-    QString DEFINES;
+    QString     DEFINES;
     QStringList INCLUDEPATH;
     QStringList LIBS;
-    QString extra;
+    QString     extra;
 
-    QList<ConfObj*> list;
-    QMap<QString,QString> vars;
+    QList<ConfObj *>       list;
+    QMap<QString, QString> vars;
 
     Conf();
     ~Conf();
 
-    QString getenv(const QString &var);
-    QString qvar(const QString &s);
-    QString normalizePath(const QString &s) const;
-    QString escapeQmakeVar(const QString &s) const;
+    QString        getenv(const QString &var);
+    QString        qvar(const QString &s);
+    QString        normalizePath(const QString &s) const;
+    QString        escapeQmakeVar(const QString &s) const;
     inline QString escapePath(const QString &s) /* prepare fs path for qmake file */
-    { return escapeQmakeVar(normalizePath(s)); }
+    {
+        return escapeQmakeVar(normalizePath(s));
+    }
     QString escapedIncludes() const;
     QString escapedLibs() const;
 
@@ -91,15 +91,18 @@ public:
     int doCommand(const QString &s, QByteArray *out = 0);
     int doCommand(const QString &prog, const QStringList &args, QByteArray *out = 0);
 
-    bool doCompileAndLink(const QString &filedata, const QStringList &incs, const QString &libs, const QString &proextra, int *retcode = 0);
-    bool checkHeader(const QString &path, const QString &h);
-    bool findHeader(const QString &h, const QStringList &ext, QString *inc);
-    bool checkLibrary(const QString &path, const QString &name);
-    bool findLibrary(const QString &name, QString *lib);
+    bool    doCompileAndLink(const QString &filedata, const QStringList &incs, const QString &libs,
+                             const QString &proextra, int *retcode = 0);
+    bool    checkHeader(const QString &path, const QString &h);
+    bool    findHeader(const QString &h, const QStringList &ext, QString *inc);
+    bool    checkLibrary(const QString &path, const QString &name);
+    bool    findLibrary(const QString &name, QString *lib);
     QString findProgram(const QString &prog);
-    bool findSimpleLibrary(const QString &incvar, const QString &libvar, const QString &incname, const QString &libname, QString *incpath, QString *libs);
+    bool findSimpleLibrary(const QString &incvar, const QString &libvar, const QString &incname, const QString &libname,
+                           QString *incpath, QString *libs);
     bool findFooConfig(const QString &path, QString *version, QStringList *incs, QString *libs, QString *otherflags);
-    bool findPkgConfig(const QString &name, VersionMode mode, const QString &req_version, QString *version, QStringList *incs, QString *libs, QString *otherflags);
+    bool findPkgConfig(const QString &name, VersionMode mode, const QString &req_version, QString *version,
+                       QStringList *incs, QString *libs, QString *otherflags);
 
     void addDefine(const QString &str);
     void addLib(const QString &str);
