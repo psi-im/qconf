@@ -246,6 +246,7 @@ public:
     }
 
     QString name, arg, var, desc;
+    bool    hidden = false; // invisible in usage
 };
 
 class ConfGen {
@@ -277,33 +278,36 @@ public:
         // extraopts += ConfOpt("disable-dnotify", "", "QC_DISABLE_DNOTIFY", "Disable Linux DNOTIFY.");
     }
 
-    void addDepOption(const QString &name, const QString &arg, const QString &var, const QString &desc)
+    ConfOpt &addDepOption(const QString &name, const QString &arg, const QString &var, const QString &desc)
     {
         ConfOpt opt;
-        opt.name = name;
-        opt.arg  = arg;
-        opt.var  = var;
-        opt.desc = desc;
+        opt.name   = name;
+        opt.arg    = arg;
+        opt.var    = var;
+        opt.desc   = desc;
+        opt.hidden = desc.isEmpty();
         depopts += opt;
+        return depopts.last();
     }
 
-    void addAppOption(const QString &name, const QString &arg, const QString &var, const QString &desc)
+    ConfOpt &addAppOption(const QString &name, const QString &arg, const QString &var, const QString &desc)
     {
         ConfOpt opt;
-        opt.name = name;
-        opt.arg  = arg;
-        opt.var  = var;
-        opt.desc = desc;
+        opt.name   = name;
+        opt.arg    = arg;
+        opt.var    = var;
+        opt.desc   = desc;
+        opt.hidden = desc.isEmpty();
         appopts += opt;
+        return appopts.last();
     }
 
-    void addOption(const QString &section, const QString &name, const QString &arg, const QString &var,
-                   const QString &desc)
+    ConfOpt &addOption(const QString &section, const QString &name, const QString &arg, const QString &var,
+                       const QString &desc = QString())
     {
         if (section == "project")
-            addAppOption(name, arg, var, desc);
-        else
-            addDepOption(name, arg, var, desc);
+            return addAppOption(name, arg, var, desc);
+        return addDepOption(name, arg, var, desc);
     }
 
     QByteArray generate()
@@ -529,9 +533,9 @@ private:
     QList<ConfUsageOpt> optsToUsage(const QList<ConfOpt> &list) const
     {
         QList<ConfUsageOpt> out;
-        for (QList<ConfOpt>::ConstIterator it = list.begin(); it != list.end(); ++it) {
-            const ConfOpt &i = *it;
-            out += ConfUsageOpt(i.name, i.arg, i.desc);
+        for (auto const &opt : list) {
+            if (!opt.hidden)
+                out += ConfUsageOpt(opt.name, opt.arg, opt.desc);
         }
         return out;
     }
@@ -1619,12 +1623,17 @@ int main(int argc, char **argv)
             longname = dep.longname;
         else
             longname = dep.name;
-        if (!dep.required && !dep.disabled)
+        if (!dep.required && !dep.disabled) {
             cg.addOption(dep.section, QString("disable-") + dep.name, "", QString("QC_DISABLE_") + escapeArg(dep.name),
                          QString("Disable use of ") + longname);
-        else if (dep.disabled)
+            cg.addOption(dep.section, QString("enable-") + dep.name, "",
+                         QString("QC_DEFAULT_ENABLE_") + escapeArg(dep.name));
+        } else if (dep.disabled) {
             cg.addOption(dep.section, QString("enable-") + dep.name, "", QString("QC_ENABLE_") + escapeArg(dep.name),
                          QString("Enable use of ") + longname);
+            cg.addOption(dep.section, QString("disable-") + dep.name, "",
+                         QString("QC_DEFAULT_DISABLE_") + escapeArg(dep.name));
+        }
 
         // extra dep args?
         for (QList<QCModArg>::ConstIterator ait = dep.args.begin(); ait != dep.args.end(); ++ait) {
