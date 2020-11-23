@@ -206,7 +206,7 @@ QStringList qc_splitflags(const QString &flags)
                     continue;
                 }
             } else { // we are in double quoetes
-                if (flags[i] == backslash && i < flags.length() - 1
+                if (i < flags.length() - 1 && flags[i] == backslash
                     && (flags[i + 1] == QLatin1Char('"') || flags[i + 1] == backslash)) {
                     // if next symbol is one of in parentheses ("\)
                     escaped = true;
