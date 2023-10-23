@@ -37,10 +37,15 @@ QStringList qc_pathlist()
     QStringList list;
     QString     path = qc_getenv("PATH");
     if (!path.isEmpty()) {
-#ifdef Q_OS_WIN
-        list = path.split(';', QString::SkipEmptyParts);
+#if QT_VERSION >= 0x060000
+        Qt::SplitBehavior flags = Qt::SkipEmptyParts;
 #else
-        list = path.split(':', QString::SkipEmptyParts);
+        QString::SplitBehavior flags = QString::SkipEmptyParts;
+#endif
+#ifdef Q_OS_WIN
+        list = path.split(';', flags);
+#else
+        list = path.split(':', flags);
 #endif
     }
 #ifdef Q_OS_WIN
