@@ -82,7 +82,7 @@ QString c_escape(const QString &in)
 
 QString echoBlock(int tabs, const QString &in)
 {
-    QStringList pars = in.split('\n', QString::KeepEmptyParts);
+    QStringList pars = in.split('\n', Qt::KeepEmptyParts);
     if (!pars.isEmpty() && pars.last().isEmpty())
         pars.removeLast();
     QStringList lines;
@@ -96,7 +96,7 @@ QString echoBlock(int tabs, const QString &in)
     QString str;
     for (n = 0; n < lines.count(); ++n) {
         QString out;
-        out.fill(9, tabs); // 9 == tab character
+        out.fill((char)9, tabs); // 9 == tab character
         if (lines[n].isEmpty())
             out += QString("printf \"\\n\"\n");
         else
@@ -108,7 +108,7 @@ QString echoBlock(int tabs, const QString &in)
 
 QString formatBlock(const QString &in)
 {
-    QStringList pars = in.split('\n', QString::KeepEmptyParts);
+    QStringList pars = in.split('\n', Qt::KeepEmptyParts);
     if (!pars.isEmpty() && pars.last().isEmpty())
         pars.removeLast();
     QStringList lines;
@@ -1130,7 +1130,7 @@ static QStringList getQCMODLines(const QByteArray &in)
     if (n == -1)
         return QStringList();
     QString     datarea = str.mid(x, n - x);
-    QStringList lines   = datarea.split('\n', QString::SkipEmptyParts);
+    QStringList lines   = datarea.split('\n', Qt::SkipEmptyParts);
     return lines;
 }
 
